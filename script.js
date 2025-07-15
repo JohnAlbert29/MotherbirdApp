@@ -12,24 +12,12 @@ const currentDateEl = document.getElementById('current-date');
 
 // Initialize the app
 document.addEventListener('DOMContentLoaded', function() {
-    // Set current date display
     updateCurrentDate();
-    
-    // Set default date to today
-    const today = new Date();
-    document.getElementById('date').valueAsDate = today;
-    
-    // Set default time to current time
-    const hours = today.getHours().toString().padStart(2, '0');
-    const minutes = today.getMinutes().toString().padStart(2, '0');
-    document.getElementById('time').value = `${hours}:${minutes}`;
-    
-    // Load and display data
+    setDefaultDateTime();
     renderTable();
     updateStats();
     renderChart();
     
-    // Form submission handler
     form.addEventListener('submit', function(e) {
         e.preventDefault();
         addIncomeEntry();
@@ -41,17 +29,29 @@ function updateCurrentDate() {
     currentDateEl.textContent = new Date().toLocaleDateString('en-US', options);
 }
 
-// Add new income entry
+function setDefaultDateTime() {
+    const today = new Date();
+    document.getElementById('date').valueAsDate = today;
+    
+    const hours = today.getHours().toString().padStart(2, '0');
+    const minutes = today.getMinutes().toString().padStart(2, '0');
+    document.getElementById('time').value = `${hours}:${minutes}`;
+}
+
 function addIncomeEntry() {
-    const date = document.getElementById('date').value;
+    const dateInput = document.getElementById('date');
     const paperMoney = parseFloat(document.getElementById('paper-money').value) || 0;
     const coins = parseFloat(document.getElementById('coins').value) || 0;
     const time = document.getElementById('time').value;
     
+    // Format date as YYYY-MM-DD
+    const date = new Date(dateInput.value);
+    const dateString = date.toISOString().split('T')[0];
+    
     const newEntry = {
-        id: Date.now(), // Unique ID for each entry
-        date: date,
-        day: getDayName(date),
+        id: Date.now(),
+        date: dateString,
+        day: getDayName(dateString),
         paperMoney: paperMoney,
         coins: coins,
         total: paperMoney + coins,
@@ -66,15 +66,11 @@ function addIncomeEntry() {
     updateStats();
     renderChart();
     
-    // Reset form but keep date and time
     form.reset();
-    document.getElementById('date').valueAsDate = new Date();
-    const now = new Date();
-    document.getElementById('time').value = `${now.getHours().toString().padStart(2, '0')}:${now.getMinutes().toString().padStart(2, '0')}`;
+    setDefaultDateTime();
     document.getElementById('paper-money').focus();
 }
 
-// Render the income table
 function renderTable() {
     tableBody.innerHTML = '';
     
@@ -87,8 +83,6 @@ function renderTable() {
     
     incomeData.forEach(entry => {
         const row = document.createElement('tr');
-        
-        // Find comparison data (same day last month)
         const comparison = getComparisonData(entry.date, entry.day);
         let comparisonHtml = '<span class="text-muted">No data</span>';
         
@@ -125,7 +119,6 @@ function renderTable() {
         tableBody.appendChild(row);
     });
     
-    // Add event listeners to action buttons
     document.querySelectorAll('.edit-btn').forEach(btn => {
         btn.addEventListener('click', function() {
             editEntry(parseInt(this.getAttribute('data-id')));
@@ -139,93 +132,38 @@ function renderTable() {
     });
 }
 
-// Fixed comparison function
-function getComparisonData(currentDate, currentDay) {
-    const currentDateObj = new Date(currentDate);
-    const lastMonth = new Date(currentDateObj);
-    lastMonth.setMonth(lastMonth.getMonth() - 1);
-    
-    // Find all entries from last month with the same day name
-    const lastMonthEntries = incomeData.filter(entry => {
-        const entryDate = new Date(entry.date);
-        return (
-            entryDate.getMonth() === lastMonth.getMonth() &&
-            entryDate.getFullYear() === lastMonth.getFullYear() &&
-            entry.day === currentDay
-        );
-    });
-    
-    if (lastMonthEntries.length > 0) {
-        // Find the entry closest to the same week number
-        const currentWeek = getWeekOfMonth(currentDateObj);
-        lastMonthEntries.sort((a, b) => {
-            const aWeek = getWeekOfMonth(new Date(a.date));
-            const bWeek = getWeekOfMonth(new Date(b.date));
-            return Math.abs(aWeek - currentWeek) - Math.abs(bWeek - currentWeek);
-        });
-        return lastMonthEntries[0];
-    }
-    
-    return null;
-}
-
-// Helper to get week of month (1-5)
-function getWeekOfMonth(date) {
-    const firstDay = new Date(date.getFullYear(), date.getMonth(), 1).getDay();
-    return Math.ceil((date.getDate() + firstDay) / 7);
-}
-
-// Edit an entry
-function editEntry(id) {
-    const entry = incomeData.find(item => item.id === id);
-    if (!entry) return;
-    
-    document.getElementById('date').value = entry.date;
-    document.getElementById('paper-money').value = entry.paperMoney;
-    document.getElementById('coins').value = entry.coins;
-    document.getElementById('time').value = entry.time;
-    
-    // Remove the entry being edited
-    incomeData = incomeData.filter(item => item.id !== id);
-    saveData();
-    renderTable();
-    updateStats();
-    renderChart();
-    
-    document.getElementById('paper-money').focus();
-}
-
-// Delete an entry
-function deleteEntry(id) {
-    if (confirm('Are you sure you want to delete this entry?')) {
-        incomeData = incomeData.filter(item => item.id !== id);
-        saveData();
-        renderTable();
-        updateStats();
-        renderChart();
-    }
-}
-
-// Update the updateStats function in script.js
+// FIXED: Today's income calculation
 function updateStats() {
-    const today = new Date().toISOString().split('T')[0];
+    // Get today's date in YYYY-MM-DD format
+    const today = new Date();
+    const todayString = today.toISOString().split('T')[0];
     
-    // Today's total - fixed to only include today's date
-    const todayEntries = incomeData.filter(entry => entry.date === today);
-    const todayTotal = todayEntries.reduce((sum, entry) => sum + entry.total, 0);
+    // Today's total - sum all entries for today's date
+    const todayTotal = incomeData
+        .filter(entry => {
+            // Compare dates as strings in YYYY-MM-DD format
+            return entry.date === todayString;
+        })
+        .reduce((sum, entry) => sum + entry.total, 0);
+    
     todayTotalEl.textContent = `₱${todayTotal.toFixed(2)}`;
     
-    // Weekly total (last 7 days)
+    // Weekly total (last 7 days including today)
     const oneWeekAgo = new Date();
-    oneWeekAgo.setDate(oneWeekAgo.getDate() - 7);
+    oneWeekAgo.setDate(oneWeekAgo.getDate() - 6); // 7 days total (6 days + today)
+    
     const weeklyTotal = incomeData
-        .filter(entry => new Date(entry.date) >= oneWeekAgo)
+        .filter(entry => {
+            const entryDate = new Date(entry.date);
+            return entryDate >= oneWeekAgo && entryDate <= today;
+        })
         .reduce((sum, entry) => sum + entry.total, 0);
+    
     weeklyTotalEl.textContent = `₱${weeklyTotal.toFixed(2)}`;
     
     // Monthly total (current month)
-    const currentMonth = new Date().getMonth();
-    const currentYear = new Date().getFullYear();
+    const currentMonth = today.getMonth();
+    const currentYear = today.getFullYear();
     const monthlyTotal = incomeData
         .filter(entry => {
             const entryDate = new Date(entry.date);
@@ -233,20 +171,17 @@ function updateStats() {
                    entryDate.getFullYear() === currentYear;
         })
         .reduce((sum, entry) => sum + entry.total, 0);
+    
     monthlyTotalEl.textContent = `₱${monthlyTotal.toFixed(2)}`;
 }
 
-// Render chart
 function renderChart() {
     const ctx = document.getElementById('income-chart').getContext('2d');
-    
-    // Group data by date for chart
     const labels = incomeData.map(entry => formatDate(entry.date));
     const paperMoneyData = incomeData.map(entry => entry.paperMoney);
     const coinsData = incomeData.map(entry => entry.coins);
     const totalData = incomeData.map(entry => entry.total);
     
-    // Destroy previous chart if it exists
     if (incomeChart) {
         incomeChart.destroy();
     }
@@ -283,14 +218,10 @@ function renderChart() {
                         size: 16
                     }
                 },
-                legend: {
-                    position: 'top',
-                },
                 tooltip: {
                     callbacks: {
                         afterBody: function(context) {
-                            const dataIndex = context[0].dataIndex;
-                            const total = totalData[dataIndex];
+                            const total = totalData[context[0].dataIndex];
                             return `Total: ₱${total.toFixed(2)}`;
                         }
                     }
@@ -299,47 +230,88 @@ function renderChart() {
             scales: {
                 y: {
                     beginAtZero: true,
-                    title: {
-                        display: true,
-                        text: 'Amount (₱)'
-                    },
                     ticks: {
                         callback: function(value) {
                             return '₱' + value;
                         }
                     }
-                },
-                x: {
-                    grid: {
-                        display: false
-                    }
                 }
-            },
-            animation: {
-                duration: 1000
             }
         }
     });
 }
 
-// Helper function to get day name from date string
-function getDayName(dateString) {
-    const days = ['Sunday', 'Monday', 'Tuesday', 'Wednesday', 'Thursday', 'Friday', 'Saturday'];
-    const date = new Date(dateString);
-    return days[date.getDay()];
+function editEntry(id) {
+    const entry = incomeData.find(item => item.id === id);
+    if (!entry) return;
+    
+    document.getElementById('date').value = entry.date;
+    document.getElementById('paper-money').value = entry.paperMoney;
+    document.getElementById('coins').value = entry.coins;
+    document.getElementById('time').value = entry.time;
+    
+    incomeData = incomeData.filter(item => item.id !== id);
+    saveData();
+    renderTable();
+    updateStats();
+    renderChart();
 }
 
-// Helper function to format date as MMM DD, YYYY
+function deleteEntry(id) {
+    if (confirm('Are you sure you want to delete this entry?')) {
+        incomeData = incomeData.filter(item => item.id !== id);
+        saveData();
+        renderTable();
+        updateStats();
+        renderChart();
+    }
+}
+
+function getComparisonData(currentDate, currentDay) {
+    const currentDateObj = new Date(currentDate);
+    const lastMonth = new Date(currentDateObj);
+    lastMonth.setMonth(lastMonth.getMonth() - 1);
+    
+    const lastMonthEntries = incomeData.filter(entry => {
+        const entryDate = new Date(entry.date);
+        return (
+            entryDate.getMonth() === lastMonth.getMonth() &&
+            entryDate.getFullYear() === lastMonth.getFullYear() &&
+            entry.day === currentDay
+        );
+    });
+    
+    if (lastMonthEntries.length > 0) {
+        const currentWeek = getWeekOfMonth(currentDateObj);
+        lastMonthEntries.sort((a, b) => {
+            const aWeek = getWeekOfMonth(new Date(a.date));
+            const bWeek = getWeekOfMonth(new Date(b.date));
+            return Math.abs(aWeek - currentWeek) - Math.abs(bWeek - currentWeek);
+        });
+        return lastMonthEntries[0];
+    }
+    
+    return null;
+}
+
+function getWeekOfMonth(date) {
+    const firstDay = new Date(date.getFullYear(), date.getMonth(), 1).getDay();
+    return Math.ceil((date.getDate() + firstDay) / 7);
+}
+
+function getDayName(dateString) {
+    const days = ['Sunday', 'Monday', 'Tuesday', 'Wednesday', 'Thursday', 'Friday', 'Saturday'];
+    return days[new Date(dateString).getDay()];
+}
+
 function formatDate(dateString) {
-    const date = new Date(dateString);
-    return date.toLocaleDateString('en-US', {
+    return new Date(dateString).toLocaleDateString('en-US', {
         month: 'short',
         day: 'numeric',
         year: 'numeric'
     });
 }
 
-// Helper function to format time (convert 24h to 12h)
 function formatTime(timeString) {
     const [hours, minutes] = timeString.split(':');
     const period = hours >= 12 ? 'PM' : 'AM';
@@ -347,7 +319,6 @@ function formatTime(timeString) {
     return `${hours12}:${minutes} ${period}`;
 }
 
-// Save data to localStorage
 function saveData() {
     localStorage.setItem('incomeData', JSON.stringify(incomeData));
 }
