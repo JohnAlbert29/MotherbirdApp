@@ -5,23 +5,38 @@ let incomeChart = null;
 // DOM elements
 const form = document.getElementById('income-form');
 const tableBody = document.querySelector('#income-table tbody');
-const todayTotalEl = document.getElementById('today-total');
-const weeklyTotalEl = document.getElementById('weekly-total');
 const monthlyTotalEl = document.getElementById('monthly-total');
+const lastMonthTotalEl = document.getElementById('last-month-total');
+const growthPercentageEl = document.getElementById('growth-percentage');
 const currentDateEl = document.getElementById('current-date');
+const currentYearEl = document.getElementById('current-year');
+const clearDataBtn = document.getElementById('clear-data');
+const exportDataBtn = document.getElementById('export-data');
 
 // Initialize the app
 document.addEventListener('DOMContentLoaded', function() {
+    // Set current year in footer
+    currentYearEl.textContent = new Date().getFullYear();
+    
+    // Set current date display
     updateCurrentDate();
+    
+    // Set default date/time
     setDefaultDateTime();
+    
+    // Load data
     renderTable();
     updateStats();
     renderChart();
     
+    // Event listeners
     form.addEventListener('submit', function(e) {
         e.preventDefault();
         addIncomeEntry();
     });
+    
+    clearDataBtn.addEventListener('click', clearAllData);
+    exportDataBtn.addEventListener('click', exportData);
 });
 
 function updateCurrentDate() {
@@ -59,8 +74,6 @@ function addIncomeEntry() {
     };
     
     incomeData.push(newEntry);
-    incomeData.sort((a, b) => new Date(a.date) - new Date(b.date));
-    
     saveData();
     renderTable();
     updateStats();
@@ -76,31 +89,16 @@ function renderTable() {
     
     if (incomeData.length === 0) {
         const row = document.createElement('tr');
-        row.innerHTML = `<td colspan="8" style="text-align: center;">No income entries yet. Add your first entry above.</td>`;
+        row.innerHTML = `<td colspan="6" style="text-align: center;">No transactions yet</td>`;
         tableBody.appendChild(row);
         return;
     }
     
+    // Sort by date descending (newest first)
+    incomeData.sort((a, b) => new Date(b.date) - new Date(a.date));
+    
     incomeData.forEach(entry => {
         const row = document.createElement('tr');
-        const comparison = getComparisonData(entry.date, entry.day);
-        let comparisonHtml = '<span class="text-muted">No data</span>';
-        
-        if (comparison) {
-            const diff = entry.total - comparison.total;
-            const percentChange = (diff / comparison.total) * 100;
-            const changeClass = diff >= 0 ? 'comparison-up' : 'comparison-down';
-            const changeSymbol = diff >= 0 ? '↑' : '↓';
-            
-            comparisonHtml = `
-                <div>
-                    <small>Last month: ₱${comparison.total.toFixed(2)}</small><br>
-                    <span class="${changeClass}">
-                        ${changeSymbol} ₱${Math.abs(diff).toFixed(2)} (${Math.abs(percentChange).toFixed(2)}%)
-                    </span>
-                </div>
-            `;
-        }
         
         row.innerHTML = `
             <td>${formatDate(entry.date)}</td>
@@ -108,17 +106,16 @@ function renderTable() {
             <td>₱${entry.paperMoney.toFixed(2)}</td>
             <td>₱${entry.coins.toFixed(2)}</td>
             <td><strong>₱${entry.total.toFixed(2)}</strong></td>
-            <td>${formatTime(entry.time)}</td>
-            <td>${comparisonHtml}</td>
             <td>
-                <button class="action-btn edit-btn" data-id="${entry.id}">Edit</button>
-                <button class="action-btn delete-btn" data-id="${entry.id}">Delete</button>
+                <button class="edit-btn" data-id="${entry.id}">Edit</button>
+                <button class="delete-btn" data-id="${entry.id}">Delete</button>
             </td>
         `;
         
         tableBody.appendChild(row);
     });
     
+    // Add event listeners to action buttons
     document.querySelectorAll('.edit-btn').forEach(btn => {
         btn.addEventListener('click', function() {
             editEntry(parseInt(this.getAttribute('data-id')));
@@ -132,39 +129,13 @@ function renderTable() {
     });
 }
 
-// FIXED: Today's income calculation
 function updateStats() {
-    // Get today's date in YYYY-MM-DD format
     const today = new Date();
-    const todayString = today.toISOString().split('T')[0];
-    
-    // Today's total - sum all entries for today's date
-    const todayTotal = incomeData
-        .filter(entry => {
-            // Compare dates as strings in YYYY-MM-DD format
-            return entry.date === todayString;
-        })
-        .reduce((sum, entry) => sum + entry.total, 0);
-    
-    todayTotalEl.textContent = `₱${todayTotal.toFixed(2)}`;
-    
-    // Weekly total (last 7 days including today)
-    const oneWeekAgo = new Date();
-    oneWeekAgo.setDate(oneWeekAgo.getDate() - 6); // 7 days total (6 days + today)
-    
-    const weeklyTotal = incomeData
-        .filter(entry => {
-            const entryDate = new Date(entry.date);
-            return entryDate >= oneWeekAgo && entryDate <= today;
-        })
-        .reduce((sum, entry) => sum + entry.total, 0);
-    
-    weeklyTotalEl.textContent = `₱${weeklyTotal.toFixed(2)}`;
-    
-    // Monthly total (current month)
     const currentMonth = today.getMonth();
     const currentYear = today.getFullYear();
-    const monthlyTotal = incomeData
+    
+    // Current month total
+    const currentMonthTotal = incomeData
         .filter(entry => {
             const entryDate = new Date(entry.date);
             return entryDate.getMonth() === currentMonth && 
@@ -172,15 +143,53 @@ function updateStats() {
         })
         .reduce((sum, entry) => sum + entry.total, 0);
     
-    monthlyTotalEl.textContent = `₱${monthlyTotal.toFixed(2)}`;
+    monthlyTotalEl.textContent = `₱${currentMonthTotal.toFixed(2)}`;
+    
+    // Last month total
+    const lastMonth = currentMonth === 0 ? 11 : currentMonth - 1;
+    const lastMonthYear = currentMonth === 0 ? currentYear - 1 : currentYear;
+    
+    const lastMonthTotal = incomeData
+        .filter(entry => {
+            const entryDate = new Date(entry.date);
+            return entryDate.getMonth() === lastMonth && 
+                   entryDate.getFullYear() === lastMonthYear;
+        })
+        .reduce((sum, entry) => sum + entry.total, 0);
+    
+    lastMonthTotalEl.textContent = `₱${lastMonthTotal.toFixed(2)}`;
+    
+    // Growth percentage
+    const growthPercentage = lastMonthTotal > 0 
+        ? ((currentMonthTotal - lastMonthTotal) / lastMonthTotal * 100).toFixed(2)
+        : currentMonthTotal > 0 ? '100.00' : '0.00';
+    
+    growthPercentageEl.textContent = `${growthPercentage}%`;
+    growthPercentageEl.style.color = growthPercentage >= 0 ? 'var(--success)' : 'var(--danger)';
 }
 
 function renderChart() {
     const ctx = document.getElementById('income-chart').getContext('2d');
-    const labels = incomeData.map(entry => formatDate(entry.date));
-    const paperMoneyData = incomeData.map(entry => entry.paperMoney);
-    const coinsData = incomeData.map(entry => entry.coins);
-    const totalData = incomeData.map(entry => entry.total);
+    const labels = [];
+    const totals = [];
+    
+    // Group by month for the chart
+    const monthlyData = {};
+    
+    incomeData.forEach(entry => {
+        const date = new Date(entry.date);
+        const monthYear = `${date.toLocaleString('default', { month: 'short' })} ${date.getFullYear()}`;
+        
+        if (!monthlyData[monthYear]) {
+            monthlyData[monthYear] = 0;
+        }
+        monthlyData[monthYear] += entry.total;
+    });
+    
+    for (const [monthYear, total] of Object.entries(monthlyData)) {
+        labels.push(monthYear);
+        totals.push(total);
+    }
     
     if (incomeChart) {
         incomeChart.destroy();
@@ -190,22 +199,13 @@ function renderChart() {
         type: 'bar',
         data: {
             labels: labels,
-            datasets: [
-                {
-                    label: 'Paper Money',
-                    data: paperMoneyData,
-                    backgroundColor: 'rgba(44, 120, 115, 0.7)',
-                    borderColor: 'rgba(44, 120, 115, 1)',
-                    borderWidth: 1
-                },
-                {
-                    label: 'Coins',
-                    data: coinsData,
-                    backgroundColor: 'rgba(255, 154, 86, 0.7)',
-                    borderColor: 'rgba(255, 154, 86, 1)',
-                    borderWidth: 1
-                }
-            ]
+            datasets: [{
+                label: 'Monthly Income',
+                data: totals,
+                backgroundColor: 'rgba(26, 187, 156, 0.7)',
+                borderColor: 'rgba(26, 187, 156, 1)',
+                borderWidth: 1
+            }]
         },
         options: {
             responsive: true,
@@ -213,16 +213,15 @@ function renderChart() {
             plugins: {
                 title: {
                     display: true,
-                    text: 'Daily Income Breakdown',
+                    text: 'Monthly Income Overview',
                     font: {
                         size: 16
                     }
                 },
                 tooltip: {
                     callbacks: {
-                        afterBody: function(context) {
-                            const total = totalData[context[0].dataIndex];
-                            return `Total: ₱${total.toFixed(2)}`;
+                        label: function(context) {
+                            return `₱${context.raw.toFixed(2)}`;
                         }
                     }
                 }
@@ -258,7 +257,7 @@ function editEntry(id) {
 }
 
 function deleteEntry(id) {
-    if (confirm('Are you sure you want to delete this entry?')) {
+    if (confirm('Are you sure you want to delete this transaction?')) {
         incomeData = incomeData.filter(item => item.id !== id);
         saveData();
         renderTable();
@@ -267,36 +266,32 @@ function deleteEntry(id) {
     }
 }
 
-function getComparisonData(currentDate, currentDay) {
-    const currentDateObj = new Date(currentDate);
-    const lastMonth = new Date(currentDateObj);
-    lastMonth.setMonth(lastMonth.getMonth() - 1);
-    
-    const lastMonthEntries = incomeData.filter(entry => {
-        const entryDate = new Date(entry.date);
-        return (
-            entryDate.getMonth() === lastMonth.getMonth() &&
-            entryDate.getFullYear() === lastMonth.getFullYear() &&
-            entry.day === currentDay
-        );
-    });
-    
-    if (lastMonthEntries.length > 0) {
-        const currentWeek = getWeekOfMonth(currentDateObj);
-        lastMonthEntries.sort((a, b) => {
-            const aWeek = getWeekOfMonth(new Date(a.date));
-            const bWeek = getWeekOfMonth(new Date(b.date));
-            return Math.abs(aWeek - currentWeek) - Math.abs(bWeek - currentWeek);
-        });
-        return lastMonthEntries[0];
+function clearAllData() {
+    if (confirm('Are you sure you want to delete ALL transaction data? This cannot be undone!')) {
+        localStorage.removeItem('incomeData');
+        incomeData = [];
+        renderTable();
+        updateStats();
+        renderChart();
+        alert('All data has been cleared!');
     }
-    
-    return null;
 }
 
-function getWeekOfMonth(date) {
-    const firstDay = new Date(date.getFullYear(), date.getMonth(), 1).getDay();
-    return Math.ceil((date.getDate() + firstDay) / 7);
+function exportData() {
+    if (incomeData.length === 0) {
+        alert('No data to export!');
+        return;
+    }
+    
+    const dataStr = JSON.stringify(incomeData, null, 2);
+    const dataUri = 'data:application/json;charset=utf-8,'+ encodeURIComponent(dataStr);
+    
+    const exportFileDefaultName = `wealthtracker-data-${new Date().toISOString().split('T')[0]}.json`;
+    
+    const linkElement = document.createElement('a');
+    linkElement.setAttribute('href', dataUri);
+    linkElement.setAttribute('download', exportFileDefaultName);
+    linkElement.click();
 }
 
 function getDayName(dateString) {
@@ -310,13 +305,6 @@ function formatDate(dateString) {
         day: 'numeric',
         year: 'numeric'
     });
-}
-
-function formatTime(timeString) {
-    const [hours, minutes] = timeString.split(':');
-    const period = hours >= 12 ? 'PM' : 'AM';
-    const hours12 = hours % 12 || 12;
-    return `${hours12}:${minutes} ${period}`;
 }
 
 function saveData() {

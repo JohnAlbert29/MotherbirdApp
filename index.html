@@ -3,84 +3,93 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Mother Bird - Daily Income Tracker</title>
+    <title>WealthTracker Pro</title>
+    <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Montserrat:wght@300;400;500;600;700&display=swap">
     <link rel="stylesheet" href="styles.css">
 </head>
 <body>
-    <div class="container">
-        <header>
-            <h1>MOTHER BIRD FLYING IN THE SKY</h1>
-            <h2>Daily Income Tracker</h2>
-            <div id="current-date" class="current-date"></div>
+    <div class="app-container">
+        <header class="app-header">
+            <div class="header-content">
+                <h1>Mother Bird Tracking</h1>
+                <p class="current-date" id="current-date"></p>
+            </div>
+            <div class="header-actions">
+                <button id="export-data" class="action-btn">Export Data</button>
+                <button id="clear-data" class="action-btn danger">Clear All</button>
+            </div>
         </header>
-        
-        <div class="stats-container">
-            <div class="stat-box">
-                <div class="stat-label">Today's Income</div>
-                <div class="stat-value" id="today-total">₱0</div>
-            </div>
-            <div class="stat-box">
-                <div class="stat-label">Weekly Total</div>
-                <div class="stat-value" id="weekly-total">₱0</div>
-            </div>
-            <div class="stat-box">
-                <div class="stat-label">Monthly Total</div>
-                <div class="stat-value" id="monthly-total">₱0</div>
-            </div>
-        </div>
-        
-        <form id="income-form" class="income-form">
-            <div class="form-row">
-                <div class="form-group">
-                    <label for="date">Date:</label>
-                    <input type="date" id="date" required>
-                </div>
-                <div class="form-group">
-                    <label for="time">Time:</label>
-                    <input type="time" id="time" required>
-                </div>
-            </div>
-            
-            <div class="form-row">
-                <div class="form-group">
-                    <label for="paper-money">Paper Money (₱):</label>
-                    <input type="number" id="paper-money" placeholder="Enter amount" required>
-                </div>
-                <div class="form-group">
-                    <label for="coins">Coins (₱):</label>
-                    <input type="number" id="coins" placeholder="Enter amount" required>
-                </div>
-            </div>
-            
-            <button type="submit" class="submit-btn">Add Entry</button>
-        </form>
-        
-        <div class="table-container">
-            <table id="income-table">
-                <thead>
-                    <tr>
-                        <th>Date</th>
-                        <th>Day</th>
-                        <th>Paper Money</th>
-                        <th>Coins</th>
-                        <th>Total</th>
-                        <th>Time</th>
-                        <th>Comparison</th>
-                        <th>Actions</th>
-                    </tr>
-                </thead>
-                <tbody>
-                    <!-- Data will be inserted here by JavaScript -->
-                </tbody>
-            </table>
-        </div>
-        
-        <div class="chart-container">
-            <canvas id="income-chart"></canvas>
-        </div>
 
-        <footer class="creator-credit">
-            Created by John Albert Retiza
+        <main class="app-main">
+            <section class="quick-stats">
+                <div class="stat-card">
+                    <div class="stat-value" id="monthly-total">₱0.00</div>
+                    <div class="stat-label">Current Month</div>
+                </div>
+                <div class="stat-card accent">
+                    <div class="stat-value" id="last-month-total">₱0.00</div>
+                    <div class="stat-label">Last Month</div>
+                </div>
+                <div class="stat-card highlight">
+                    <div class="stat-value" id="growth-percentage">0%</div>
+                    <div class="stat-label">Growth</div>
+                </div>
+            </section>
+
+            <section class="data-entry">
+                <form id="income-form">
+                    <div class="form-grid">
+                        <div class="form-group">
+                            <label for="date">Date</label>
+                            <input type="date" id="date" required>
+                        </div>
+                        <div class="form-group">
+                            <label for="time">Time</label>
+                            <input type="time" id="time" required>
+                        </div>
+                        <div class="form-group">
+                            <label for="paper-money">Cash (₱)</label>
+                            <input type="number" id="paper-money" placeholder="0.00" required>
+                        </div>
+                        <div class="form-group">
+                            <label for="coins">Coins (₱)</label>
+                            <input type="number" id="coins" placeholder="0.00" required>
+                        </div>
+                    </div>
+                    <button type="submit" class="submit-btn">Add Transaction</button>
+                </form>
+            </section>
+
+            <section class="data-visualization">
+                <div class="chart-container">
+                    <canvas id="income-chart"></canvas>
+                </div>
+            </section>
+
+            <section class="transaction-history">
+                <h2>Transaction History</h2>
+                <div class="table-container">
+                    <table id="income-table">
+                        <thead>
+                            <tr>
+                                <th>Date</th>
+                                <th>Type</th>
+                                <th>Cash</th>
+                                <th>Digital</th>
+                                <th>Total</th>
+                                <th>Actions</th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                            <!-- Data will be inserted here by JavaScript -->
+                        </tbody>
+                    </table>
+                </div>
+            </section>
+        </main>
+
+        <footer class="app-footer">
+            <p>WealthTracker Pro © <span id="current-year"></span> | Created by John Albert Retiza</p>
         </footer>
     </div>
 
