@@ -16,7 +16,7 @@
                 <p class="current-date" id="current-date"></p>
             </div>
             <div class="header-actions">
-                <button id="export-data" class="action-btn">Export Data</button>
+                <button id="export-data" class="action-btn export">Export PDF</button>
                 <button id="clear-data" class="action-btn danger">Clear All</button>
             </div>
         </header>
@@ -71,7 +71,7 @@
                                 <th>Date</th>
                                 <th>Type</th>
                                 <th>Cash</th>
-                                <th>Digital</th>
+                                <th>Coins</th>
                                 <th>Total</th>
                                 <th>Actions</th>
                             </tr>
@@ -95,6 +95,8 @@
         </footer>
     </div>
 
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.1/jspdf.umd.min.js"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf-autotable/3.5.28/jspdf.plugin.autotable.min.js"></script>
     <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
     <script src="script.js"></script>
 </body>

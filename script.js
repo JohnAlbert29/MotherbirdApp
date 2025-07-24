@@ -392,16 +392,88 @@ function exportData() {
         alert('No data to export!');
         return;
     }
+
+    // Create new PDF document
+    const { jsPDF } = window.jspdf;
+    const doc = new jsPDF();
     
-    const dataStr = JSON.stringify(incomeData, null, 2);
-    const dataUri = 'data:application/json;charset=utf-8,'+ encodeURIComponent(dataStr);
+    // Add title
+    doc.setFontSize(20);
+    doc.setTextColor(40, 40, 40);
+    doc.text('Mother Bird Tracking Report', 105, 20, { align: 'center' });
     
-    const exportFileDefaultName = `wealthtracker-data-${new Date().toISOString().split('T')[0]}.json`;
+    // Add current date
+    doc.setFontSize(12);
+    doc.setTextColor(100, 100, 100);
+    doc.text(`Generated on: ${new Date().toLocaleDateString('en-US', { 
+        weekday: 'long', 
+        year: 'numeric', 
+        month: 'long', 
+        day: 'numeric' 
+    })}`, 105, 30, { align: 'center' });
     
-    const linkElement = document.createElement('a');
-    linkElement.setAttribute('href', dataUri);
-    linkElement.setAttribute('download', exportFileDefaultName);
-    linkElement.click();
+    // Add summary statistics
+    doc.setFontSize(14);
+    doc.setTextColor(40, 40, 40);
+    doc.text('Summary Statistics', 14, 45);
+    
+    doc.setFontSize(12);
+    doc.text(`Current Month Total: ₱${document.getElementById('monthly-total').textContent}`, 14, 55);
+    doc.text(`Last Month Total: ₱${document.getElementById('last-month-total').textContent}`, 14, 65);
+    doc.text(`Growth Percentage: ${document.getElementById('growth-percentage').textContent}`, 14, 75);
+    
+    // Add transaction table
+    doc.setFontSize(14);
+    doc.text('Transaction History', 14, 90);
+    
+    // Prepare data for the table
+    const tableData = incomeData.map(entry => [
+        formatDate(entry.date),
+        entry.day,
+        `₱${entry.paperMoney.toFixed(2)}`,
+        `₱${entry.coins.toFixed(2)}`,
+        `₱${entry.total.toFixed(2)}`
+    ]);
+    
+    // Add the table
+    doc.autoTable({
+        startY: 95,
+        head: [['Date', 'Day', 'Cash', 'Coins', 'Total']],
+        body: tableData,
+        headStyles: {
+            fillColor: [42, 63, 84], // Primary color from your CSS
+            textColor: 255,
+            fontStyle: 'bold'
+        },
+        alternateRowStyles: {
+            fillColor: [245, 247, 250] // Light color from your CSS
+        },
+        margin: { top: 95 },
+        styles: {
+            cellPadding: 5,
+            fontSize: 10,
+            valign: 'middle'
+        },
+        columnStyles: {
+            0: { cellWidth: 30 },
+            1: { cellWidth: 25 },
+            2: { cellWidth: 25 },
+            3: { cellWidth: 25 },
+            4: { cellWidth: 25 }
+        }
+    });
+    
+    // Add footer with your name
+    const pageCount = doc.internal.getNumberOfPages();
+    for(let i = 1; i <= pageCount; i++) {
+        doc.setPage(i);
+        doc.setFontSize(10);
+        doc.setTextColor(150, 150, 150);
+        doc.text(`Created by John Albert Retiza • Page ${i} of ${pageCount}`, 105, doc.internal.pageSize.height - 10, { align: 'center' });
+    }
+    
+    // Save the PDF
+    doc.save(`MotherBird_Report_${new Date().toISOString().split('T')[0]}.pdf`);
 }
 
 function getDayName(dateString) {

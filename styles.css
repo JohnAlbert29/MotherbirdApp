@@ -338,6 +338,14 @@ tr:hover {
     background-color: #2980b9;
 }
 
+.action-btn.export {
+    background-color: var(--success);
+}
+
+.action-btn.export:hover {
+    background-color: #219653;
+}
+
 /* Responsive styles */
 @media (max-width: 768px) {
     .app-header {
