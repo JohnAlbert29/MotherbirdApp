@@ -395,44 +395,63 @@ function exportData() {
 
     const { jsPDF } = window.jspdf;
     const doc = new jsPDF({
-        orientation: incomeData.length > 15 ? 'landscape' : 'portrait'
+        orientation: incomeData.length > 15 ? 'landscape' : 'portrait',
+        unit: 'mm' // Using millimeters for more precise control
     });
-    
-    // Title and metadata
-    doc.setFontSize(20);
-    doc.setTextColor(40, 40, 40);
+
+    // Set default font
+    doc.setFont('helvetica', 'normal');
+
+    // Title
+    doc.setFontSize(18);
+    doc.setTextColor(42, 63, 84); // Using your primary color
     doc.text('Mother Bird Tracking Report', 105, 20, { align: 'center' });
-    
-    doc.setFontSize(12);
+
+    // Generation date
+    doc.setFontSize(11);
     doc.setTextColor(100, 100, 100);
     doc.text(`Generated on: ${new Date().toLocaleDateString('en-US', { 
         weekday: 'long', 
         year: 'numeric', 
         month: 'long', 
         day: 'numeric' 
-    })}`, 105, 30, { align: 'center' });
-    
-    // Summary statistics - centered
+    })}`, 105, 27, { align: 'center' });
+
+    // Summary section
     doc.setFontSize(14);
+    doc.setTextColor(42, 63, 84);
+    doc.text('Summary Statistics', 105, 37, { align: 'center' });
+
+    doc.setFontSize(11);
     doc.setTextColor(40, 40, 40);
-    doc.text('Summary Statistics', 105, 45, { align: 'center' });
+    doc.text(`Current Month Total: ₱${document.getElementById('monthly-total').textContent}`, 105, 44, { align: 'center' });
+    doc.text(`Last Month Total: ₱${document.getElementById('last-month-total').textContent}`, 105, 51, { align: 'center' });
     
-    doc.setFontSize(12);
-    doc.text(`Current Month Total: ₱${document.getElementById('monthly-total').textContent}`, 105, 55, { align: 'center' });
-    doc.text(`Last Month Total: ₱${document.getElementById('last-month-total').textContent}`, 105, 65, { align: 'center' });
-    doc.text(`Growth Percentage: ${document.getElementById('growth-percentage').textContent}`, 105, 75, { align: 'center' });
-    
-    // Transaction table - centered with optimized width
+    // Growth percentage with color coding
+    const growthText = `Growth Percentage: ${document.getElementById('growth-percentage').textContent}`;
+    const growthValue = parseFloat(document.getElementById('growth-percentage').textContent);
+    doc.setTextColor(growthValue >= 0 ? 39, 174, 96 : 231, 76, 60); // Green or red
+    doc.text(growthText, 105, 58, { align: 'center' });
+
+    // Transaction table
+    doc.setFontSize(14);
+    doc.setTextColor(42, 63, 84);
+    doc.text('Transaction History', 105, 68, { align: 'center' });
+
+    // Prepare table data with proper number formatting
+    const tableData = incomeData.map(entry => [
+        formatDate(entry.date),
+        entry.day.substring(0, 3),
+        numberWithCommas(entry.paperMoney.toFixed(2)),
+        numberWithCommas(entry.coins.toFixed(2)),
+        numberWithCommas(entry.total.toFixed(2))
+    ]);
+
+    // Table configuration
     const tableConfig = {
-        startY: 85,
+        startY: 75,
         head: [['Date', 'Day', 'Cash (₱)', 'Coins (₱)', 'Total (₱)']],
-        body: incomeData.map(entry => [
-            formatDate(entry.date),
-            entry.day.substring(0, 3), // Shortened day
-            entry.paperMoney.toFixed(2),
-            entry.coins.toFixed(2),
-            entry.total.toFixed(2)
-        ]),
+        body: tableData,
         headStyles: {
             fillColor: [42, 63, 84],
             textColor: 255,
@@ -440,55 +459,61 @@ function exportData() {
             halign: 'center'
         },
         bodyStyles: {
-            halign: 'center'
+            halign: 'center',
+            valign: 'middle'
         },
         alternateRowStyles: {
             fillColor: [245, 247, 250]
         },
         styles: {
             fontSize: 10,
-            cellPadding: 4,
-            overflow: 'linebreak',
-            valign: 'middle'
+            cellPadding: 3,
+            overflow: 'linebreak'
         },
         columnStyles: {
-            0: { cellWidth: 30 }, // Date
-            1: { cellWidth: 20 }, // Day
-            2: { cellWidth: 30 }, // Cash
-            3: { cellWidth: 30 }, // Coins
-            4: { cellWidth: 30 }  // Total
+            0: { cellWidth: 25 }, // Date
+            1: { cellWidth: 15 }, // Day
+            2: { cellWidth: 25 }, // Cash
+            3: { cellWidth: 25 }, // Coins
+            4: { cellWidth: 25 }  // Total
         },
         margin: { left: 15, right: 15 },
-        tableWidth: 'wrap'
+        tableWidth: 'auto',
+        theme: 'grid' // Adds clean grid lines
     };
 
-    // Center the table horizontally
-    const pageWidth = doc.internal.pageSize.getWidth();
-    const tableWidth = tableConfig.columnStyles[0].cellWidth + 
-                      tableConfig.columnStyles[1].cellWidth + 
-                      tableConfig.columnStyles[2].cellWidth + 
-                      tableConfig.columnStyles[3].cellWidth + 
-                      tableConfig.columnStyles[4].cellWidth + 
-                      (tableConfig.styles.cellPadding * 10); // Account for padding
-    
-    tableConfig.margin.left = (pageWidth - tableWidth) / 2;
-    tableConfig.margin.right = tableConfig.margin.left;
-    
+    // Generate table
     doc.autoTable(tableConfig);
-    
+
     // Add footer
     const pageCount = doc.internal.getNumberOfPages();
     for(let i = 1; i <= pageCount; i++) {
         doc.setPage(i);
-        doc.setFontSize(8);
+        doc.setFontSize(9);
         doc.setTextColor(150, 150, 150);
         doc.text(`Created by John Albert Retiza • Page ${i} of ${pageCount}`, 
-                pageWidth / 2, 
+                doc.internal.pageSize.width / 2, 
                 doc.internal.pageSize.height - 10, 
                 { align: 'center' });
     }
-    
+
+    // Save PDF
     doc.save(`MotherBird_Report_${new Date().toISOString().split('T')[0]}.pdf`);
+}
+
+// Helper function to format numbers with commas
+function numberWithCommas(x) {
+    return x.toString().replace(/\B(?=(\d{3})+(?!\d))/g, ",");
+}
+
+// Helper function for date formatting
+function formatDate(dateString) {
+    const date = new Date(dateString);
+    return date.toLocaleDateString('en-US', {
+        month: 'short',
+        day: 'numeric',
+        year: 'numeric'
+    });
 }
 
 function getDayName(dateString) {
