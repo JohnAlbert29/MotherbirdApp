@@ -393,16 +393,16 @@ function exportData() {
         return;
     }
 
-    // Create new PDF document
     const { jsPDF } = window.jspdf;
-    const doc = new jsPDF();
+    const doc = new jsPDF({
+        orientation: incomeData.length > 20 ? 'landscape' : 'portrait'
+    });
     
-    // Add title
+    // Title and metadata
     doc.setFontSize(20);
     doc.setTextColor(40, 40, 40);
     doc.text('Mother Bird Tracking Report', 105, 20, { align: 'center' });
     
-    // Add current date
     doc.setFontSize(12);
     doc.setTextColor(100, 100, 100);
     doc.text(`Generated on: ${new Date().toLocaleDateString('en-US', { 
@@ -412,7 +412,7 @@ function exportData() {
         day: 'numeric' 
     })}`, 105, 30, { align: 'center' });
     
-    // Add summary statistics
+    // Summary statistics
     doc.setFontSize(14);
     doc.setTextColor(40, 40, 40);
     doc.text('Summary Statistics', 14, 45);
@@ -422,57 +422,65 @@ function exportData() {
     doc.text(`Last Month Total: ₱${document.getElementById('last-month-total').textContent}`, 14, 65);
     doc.text(`Growth Percentage: ${document.getElementById('growth-percentage').textContent}`, 14, 75);
     
-    // Add transaction table
+    // Transaction table
     doc.setFontSize(14);
     doc.text('Transaction History', 14, 90);
     
-    // Prepare data for the table
+    // Prepare table data with optimized columns
     const tableData = incomeData.map(entry => [
         formatDate(entry.date),
-        entry.day,
+        entry.day.substring(0, 3), // Shorten day to 3 letters
         `₱${entry.paperMoney.toFixed(2)}`,
         `₱${entry.coins.toFixed(2)}`,
         `₱${entry.total.toFixed(2)}`
     ]);
     
-    // Add the table
-    doc.autoTable({
+    // Table configuration
+    const tableConfig = {
         startY: 95,
         head: [['Date', 'Day', 'Cash', 'Coins', 'Total']],
         body: tableData,
         headStyles: {
-            fillColor: [42, 63, 84], // Primary color from your CSS
+            fillColor: [42, 63, 84],
             textColor: 255,
             fontStyle: 'bold'
         },
         alternateRowStyles: {
-            fillColor: [245, 247, 250] // Light color from your CSS
+            fillColor: [245, 247, 250]
         },
-        margin: { top: 95 },
         styles: {
-            cellPadding: 5,
-            fontSize: 10,
+            fontSize: 9, // Slightly smaller font
+            cellPadding: 3, // Less padding
+            overflow: 'linebreak', // Handle long content
             valign: 'middle'
         },
         columnStyles: {
-            0: { cellWidth: 30 },
-            1: { cellWidth: 25 },
-            2: { cellWidth: 25 },
-            3: { cellWidth: 25 },
-            4: { cellWidth: 25 }
-        }
-    });
+            0: { cellWidth: 25 }, // Date
+            1: { cellWidth: 15 }, // Day (shortened)
+            2: { cellWidth: 25 }, // Cash
+            3: { cellWidth: 25 }, // Coins
+            4: { cellWidth: 25 }  // Total
+        },
+        margin: { left: 10, right: 10 }, // Add side margins
+        tableWidth: 'auto' // Let the library calculate width
+    };
     
-    // Add footer with your name
+    // Generate table
+    doc.autoTable(tableConfig);
+    
+    // Add footer
     const pageCount = doc.internal.getNumberOfPages();
     for(let i = 1; i <= pageCount; i++) {
         doc.setPage(i);
-        doc.setFontSize(10);
+        doc.setFontSize(8);
         doc.setTextColor(150, 150, 150);
-        doc.text(`Created by John Albert Retiza • Page ${i} of ${pageCount}`, 105, doc.internal.pageSize.height - 10, { align: 'center' });
+        doc.text(`Created by John Albert Retiza • Page ${i} of ${pageCount}`, 
+                doc.internal.pageSize.width / 2, 
+                doc.internal.pageSize.height - 10, 
+                { align: 'center' });
     }
     
-    // Save the PDF
+    // Save PDF
     doc.save(`MotherBird_Report_${new Date().toISOString().split('T')[0]}.pdf`);
 }
 
