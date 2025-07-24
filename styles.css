@@ -323,7 +323,7 @@ tr:hover {
     cursor: not-allowed;
 }
 
-.view-more-btn {
+.view-all-btn {
     padding: 0.5rem 1.5rem;
     background-color: var(--accent);
     color: white;
@@ -334,7 +334,7 @@ tr:hover {
     margin: 1rem 0;
 }
 
-.view-more-btn:hover {
+.view-all-btn:hover {
     background-color: #2980b9;
 }
 

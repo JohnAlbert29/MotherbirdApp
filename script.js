@@ -99,7 +99,7 @@ function addIncomeEntry() {
     document.getElementById('paper-money').focus();
 }
 
-function renderTable() {
+function renderTable(showAll = false) {
     tableBody.innerHTML = '';
     
     if (incomeData.length === 0) {
@@ -123,19 +123,16 @@ function renderTable() {
         const row = document.createElement('tr');
         row.innerHTML = `<td colspan="6" style="text-align: center;">No transactions for selected period</td>`;
         tableBody.appendChild(row);
-        
-        // Add view more button
-        addViewMoreButton();
         return;
     }
     
-    // Calculate pagination
-    const startIndex = (currentPage - 1) * transactionsPerPage;
-    const endIndex = startIndex + transactionsPerPage;
-    const paginatedData = filteredData.slice(startIndex, endIndex);
+    // Show all transactions if showAll is true or if there are fewer than transactionsPerPage
+    const dataToShow = showAll || filteredData.length <= transactionsPerPage 
+        ? filteredData 
+        : filteredData.slice(0, transactionsPerPage);
     
     // Display transactions
-    paginatedData.forEach(entry => {
+    dataToShow.forEach(entry => {
         const row = document.createElement('tr');
         
         row.innerHTML = `
@@ -153,9 +150,9 @@ function renderTable() {
         tableBody.appendChild(row);
     });
     
-    // Add view more button if there are more transactions
-    if (filteredData.length > currentPage * transactionsPerPage) {
-        addViewMoreButton();
+    // Add "View All" button if not showing all and there are more transactions
+    if (!showAll && filteredData.length > transactionsPerPage) {
+        addViewAllButton();
     }
     
     // Add month navigation controls
@@ -175,19 +172,17 @@ function renderTable() {
     });
 }
 
-// Add these new functions to handle pagination and month navigation
-function addViewMoreButton() {
+function addViewAllButton() {
     const row = document.createElement('tr');
     row.innerHTML = `
         <td colspan="6" style="text-align: center;">
-            <button id="view-more-btn" class="view-more-btn">View More Transactions</button>
+            <button id="view-all-btn" class="view-all-btn">View All Transactions</button>
         </td>
     `;
     tableBody.appendChild(row);
     
-    document.getElementById('view-more-btn')?.addEventListener('click', function() {
-        currentPage++;
-        renderTable();
+    document.getElementById('view-all-btn')?.addEventListener('click', function() {
+        renderTable(true); // Pass true to show all transactions
     });
 }
 
