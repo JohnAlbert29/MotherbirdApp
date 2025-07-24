@@ -2,7 +2,7 @@
 let incomeData = JSON.parse(localStorage.getItem('incomeData')) || [];
 let incomeChart = null;
 
-const transactionsPerPage = 10;
+const transactionsPerPage = 5;
 let currentPage = 1;
 let currentMonthView = new Date().getMonth();
 let currentYearView = new Date().getFullYear();
