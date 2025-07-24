@@ -2,6 +2,11 @@
 let incomeData = JSON.parse(localStorage.getItem('incomeData')) || [];
 let incomeChart = null;
 
+const transactionsPerPage = 10;
+let currentPage = 1;
+let currentMonthView = new Date().getMonth();
+let currentYearView = new Date().getFullYear();
+
 // DOM elements
 const form = document.getElementById('income-form');
 const tableBody = document.querySelector('#income-table tbody');
@@ -75,6 +80,16 @@ function addIncomeEntry() {
     
     incomeData.push(newEntry);
     saveData();
+    
+    // Check if this is a new month
+    const entryMonth = date.getMonth();
+    const entryYear = date.getFullYear();
+    if (entryMonth !== currentMonthView || entryYear !== currentYearView) {
+        currentMonthView = entryMonth;
+        currentYearView = entryYear;
+        currentPage = 1;
+    }
+    
     renderTable();
     updateStats();
     renderChart();
@@ -97,7 +112,30 @@ function renderTable() {
     // Sort by date descending (newest first)
     incomeData.sort((a, b) => new Date(b.date) - new Date(a.date));
     
-    incomeData.forEach(entry => {
+    // Filter transactions for the current viewed month/year
+    const filteredData = incomeData.filter(entry => {
+        const entryDate = new Date(entry.date);
+        return entryDate.getMonth() === currentMonthView && 
+               entryDate.getFullYear() === currentYearView;
+    });
+    
+    if (filteredData.length === 0) {
+        const row = document.createElement('tr');
+        row.innerHTML = `<td colspan="6" style="text-align: center;">No transactions for selected period</td>`;
+        tableBody.appendChild(row);
+        
+        // Add view more button
+        addViewMoreButton();
+        return;
+    }
+    
+    // Calculate pagination
+    const startIndex = (currentPage - 1) * transactionsPerPage;
+    const endIndex = startIndex + transactionsPerPage;
+    const paginatedData = filteredData.slice(startIndex, endIndex);
+    
+    // Display transactions
+    paginatedData.forEach(entry => {
         const row = document.createElement('tr');
         
         row.innerHTML = `
@@ -115,6 +153,14 @@ function renderTable() {
         tableBody.appendChild(row);
     });
     
+    // Add view more button if there are more transactions
+    if (filteredData.length > currentPage * transactionsPerPage) {
+        addViewMoreButton();
+    }
+    
+    // Add month navigation controls
+    addMonthNavigation();
+    
     // Add event listeners to action buttons
     document.querySelectorAll('.edit-btn').forEach(btn => {
         btn.addEventListener('click', function() {
@@ -127,6 +173,75 @@ function renderTable() {
             deleteEntry(parseInt(this.getAttribute('data-id')));
         });
     });
+}
+
+// Add these new functions to handle pagination and month navigation
+function addViewMoreButton() {
+    const row = document.createElement('tr');
+    row.innerHTML = `
+        <td colspan="6" style="text-align: center;">
+            <button id="view-more-btn" class="view-more-btn">View More Transactions</button>
+        </td>
+    `;
+    tableBody.appendChild(row);
+    
+    document.getElementById('view-more-btn')?.addEventListener('click', function() {
+        currentPage++;
+        renderTable();
+    });
+}
+
+function addMonthNavigation() {
+    const monthNames = ["January", "February", "March", "April", "May", "June",
+                       "July", "August", "September", "October", "November", "December"];
+    
+    // Find the transaction history section
+    const historySection = document.querySelector('.transaction-history');
+    
+    // Create or update month navigation
+    let nav = document.querySelector('.month-navigation');
+    if (!nav) {
+        nav = document.createElement('div');
+        nav.className = 'month-navigation';
+        historySection.insertBefore(nav, historySection.querySelector('h2').nextSibling);
+    }
+    
+    nav.innerHTML = `
+        <button class="month-nav-btn prev-month">&lt; Previous</button>
+        <span class="current-month">${monthNames[currentMonthView]} ${currentYearView}</span>
+        <button class="month-nav-btn next-month">Next &gt;</button>
+    `;
+    
+    // Add event listeners
+    document.querySelector('.prev-month')?.addEventListener('click', function() {
+        currentMonthView--;
+        if (currentMonthView < 0) {
+            currentMonthView = 11;
+            currentYearView--;
+        }
+        currentPage = 1;
+        renderTable();
+    });
+    
+    document.querySelector('.next-month')?.addEventListener('click', function() {
+        currentMonthView++;
+        if (currentMonthView > 11) {
+            currentMonthView = 0;
+            currentYearView++;
+        }
+        currentPage = 1;
+        renderTable();
+    });
+    
+    // Disable next month button if it's in the future
+    const nextMonthBtn = document.querySelector('.next-month');
+    const currentDate = new Date();
+    if (currentYearView > currentDate.getFullYear() || 
+        (currentYearView === currentDate.getFullYear() && currentMonthView > currentDate.getMonth())) {
+        nextMonthBtn.disabled = true;
+        nextMonthBtn.style.opacity = '0.5';
+        nextMonthBtn.style.cursor = 'not-allowed';
+    }
 }
 
 function updateStats() {

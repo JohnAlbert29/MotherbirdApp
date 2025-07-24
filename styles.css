@@ -289,6 +289,55 @@ tr:hover {
     opacity: 0.8;
 }
 
+/* Add these to your existing CSS */
+.month-navigation {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    gap: 1rem;
+    margin-bottom: 1.5rem;
+}
+
+.current-month {
+    font-weight: 600;
+    min-width: 150px;
+    text-align: center;
+}
+
+.month-nav-btn {
+    padding: 0.5rem 1rem;
+    background-color: var(--primary);
+    color: white;
+    border: none;
+    border-radius: 4px;
+    cursor: pointer;
+    transition: background-color 0.3s ease;
+}
+
+.month-nav-btn:hover:not(:disabled) {
+    background-color: var(--dark);
+}
+
+.month-nav-btn:disabled {
+    opacity: 0.5;
+    cursor: not-allowed;
+}
+
+.view-more-btn {
+    padding: 0.5rem 1.5rem;
+    background-color: var(--accent);
+    color: white;
+    border: none;
+    border-radius: 4px;
+    cursor: pointer;
+    transition: background-color 0.3s ease;
+    margin: 1rem 0;
+}
+
+.view-more-btn:hover {
+    background-color: #2980b9;
+}
+
 /* Responsive styles */
 @media (max-width: 768px) {
     .app-header {
