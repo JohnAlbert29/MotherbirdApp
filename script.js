@@ -395,7 +395,7 @@ function exportData() {
 
     const { jsPDF } = window.jspdf;
     const doc = new jsPDF({
-        orientation: incomeData.length > 20 ? 'landscape' : 'portrait'
+        orientation: incomeData.length > 15 ? 'landscape' : 'portrait'
     });
     
     // Title and metadata
@@ -412,60 +412,68 @@ function exportData() {
         day: 'numeric' 
     })}`, 105, 30, { align: 'center' });
     
-    // Summary statistics
+    // Summary statistics - centered
     doc.setFontSize(14);
     doc.setTextColor(40, 40, 40);
-    doc.text('Summary Statistics', 14, 45);
+    doc.text('Summary Statistics', 105, 45, { align: 'center' });
     
     doc.setFontSize(12);
-    doc.text(`Current Month Total: ₱${document.getElementById('monthly-total').textContent}`, 14, 55);
-    doc.text(`Last Month Total: ₱${document.getElementById('last-month-total').textContent}`, 14, 65);
-    doc.text(`Growth Percentage: ${document.getElementById('growth-percentage').textContent}`, 14, 75);
+    doc.text(`Current Month Total: ₱${document.getElementById('monthly-total').textContent}`, 105, 55, { align: 'center' });
+    doc.text(`Last Month Total: ₱${document.getElementById('last-month-total').textContent}`, 105, 65, { align: 'center' });
+    doc.text(`Growth Percentage: ${document.getElementById('growth-percentage').textContent}`, 105, 75, { align: 'center' });
     
-    // Transaction table
-    doc.setFontSize(14);
-    doc.text('Transaction History', 14, 90);
-    
-    // Prepare table data with optimized columns
-    const tableData = incomeData.map(entry => [
-        formatDate(entry.date),
-        entry.day.substring(0, 3), // Shorten day to 3 letters
-        `₱${entry.paperMoney.toFixed(2)}`,
-        `₱${entry.coins.toFixed(2)}`,
-        `₱${entry.total.toFixed(2)}`
-    ]);
-    
-    // Table configuration
+    // Transaction table - centered with optimized width
     const tableConfig = {
-        startY: 95,
-        head: [['Date', 'Day', 'Cash', 'Coins', 'Total']],
-        body: tableData,
+        startY: 85,
+        head: [['Date', 'Day', 'Cash (₱)', 'Coins (₱)', 'Total (₱)']],
+        body: incomeData.map(entry => [
+            formatDate(entry.date),
+            entry.day.substring(0, 3), // Shortened day
+            entry.paperMoney.toFixed(2),
+            entry.coins.toFixed(2),
+            entry.total.toFixed(2)
+        ]),
         headStyles: {
             fillColor: [42, 63, 84],
             textColor: 255,
-            fontStyle: 'bold'
+            fontStyle: 'bold',
+            halign: 'center'
+        },
+        bodyStyles: {
+            halign: 'center'
         },
         alternateRowStyles: {
             fillColor: [245, 247, 250]
         },
         styles: {
-            fontSize: 9, // Slightly smaller font
-            cellPadding: 3, // Less padding
-            overflow: 'linebreak', // Handle long content
+            fontSize: 10,
+            cellPadding: 4,
+            overflow: 'linebreak',
             valign: 'middle'
         },
         columnStyles: {
-            0: { cellWidth: 25 }, // Date
-            1: { cellWidth: 15 }, // Day (shortened)
-            2: { cellWidth: 25 }, // Cash
-            3: { cellWidth: 25 }, // Coins
-            4: { cellWidth: 25 }  // Total
+            0: { cellWidth: 30 }, // Date
+            1: { cellWidth: 20 }, // Day
+            2: { cellWidth: 30 }, // Cash
+            3: { cellWidth: 30 }, // Coins
+            4: { cellWidth: 30 }  // Total
         },
-        margin: { left: 10, right: 10 }, // Add side margins
-        tableWidth: 'auto' // Let the library calculate width
+        margin: { left: 15, right: 15 },
+        tableWidth: 'wrap'
     };
+
+    // Center the table horizontally
+    const pageWidth = doc.internal.pageSize.getWidth();
+    const tableWidth = tableConfig.columnStyles[0].cellWidth + 
+                      tableConfig.columnStyles[1].cellWidth + 
+                      tableConfig.columnStyles[2].cellWidth + 
+                      tableConfig.columnStyles[3].cellWidth + 
+                      tableConfig.columnStyles[4].cellWidth + 
+                      (tableConfig.styles.cellPadding * 10); // Account for padding
     
-    // Generate table
+    tableConfig.margin.left = (pageWidth - tableWidth) / 2;
+    tableConfig.margin.right = tableConfig.margin.left;
+    
     doc.autoTable(tableConfig);
     
     // Add footer
@@ -475,12 +483,11 @@ function exportData() {
         doc.setFontSize(8);
         doc.setTextColor(150, 150, 150);
         doc.text(`Created by John Albert Retiza • Page ${i} of ${pageCount}`, 
-                doc.internal.pageSize.width / 2, 
+                pageWidth / 2, 
                 doc.internal.pageSize.height - 10, 
                 { align: 'center' });
     }
     
-    // Save PDF
     doc.save(`MotherBird_Report_${new Date().toISOString().split('T')[0]}.pdf`);
 }
 
