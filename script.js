@@ -404,7 +404,7 @@ function exportData() {
 
     // Title
     doc.setFontSize(18);
-    doc.setTextColor(42, 63, 84);
+    doc.setTextColor(42, 63, 84); // Correct color format (R,G,B)
     doc.text('Mother Bird Tracking Report', 105, 20, { align: 'center' });
 
     // Generation date
@@ -427,10 +427,14 @@ function exportData() {
     doc.text(`Current Month Total: ₱${document.getElementById('monthly-total').textContent}`, 105, 44, { align: 'center' });
     doc.text(`Last Month Total: ₱${document.getElementById('last-month-total').textContent}`, 105, 51, { align: 'center' });
     
-    // Growth percentage with color coding
+    // Growth percentage with color coding - FIXED COLOR FORMAT
     const growthText = `Growth Percentage: ${document.getElementById('growth-percentage').textContent}`;
     const growthValue = parseFloat(document.getElementById('growth-percentage').textContent);
-    doc.setTextColor(growthValue >= 0 ? [39, 174, 96] : [231, 76, 60]);
+    if (growthValue >= 0) {
+        doc.setTextColor(39, 174, 96); // Green for positive
+    } else {
+        doc.setTextColor(231, 76, 60); // Red for negative
+    }
     doc.text(growthText, 105, 58, { align: 'center' });
 
     // Transaction table
@@ -453,8 +457,8 @@ function exportData() {
         head: [['Date', 'Day', 'Cash (₱)', 'Coins (₱)', 'Total (₱)']],
         body: tableData,
         headStyles: {
-            fillColor: [42, 63, 84],
-            textColor: 255,
+            fillColor: [42, 63, 84], // Dark blue header
+            textColor: 255, // White text
             fontStyle: 'bold',
             halign: 'center'
         },
@@ -463,7 +467,7 @@ function exportData() {
             valign: 'middle'
         },
         alternateRowStyles: {
-            fillColor: [245, 247, 250]
+            fillColor: [245, 247, 250] // Light gray alternate rows
         },
         styles: {
             fontSize: 10,
@@ -471,15 +475,15 @@ function exportData() {
             overflow: 'linebreak'
         },
         columnStyles: {
-            0: { cellWidth: 25 },
-            1: { cellWidth: 15 },
-            2: { cellWidth: 25 },
-            3: { cellWidth: 25 },
-            4: { cellWidth: 25 }
+            0: { cellWidth: 25 }, // Date column
+            1: { cellWidth: 15 }, // Day column
+            2: { cellWidth: 25 }, // Cash column
+            3: { cellWidth: 25 }, // Coins column
+            4: { cellWidth: 25 }  // Total column
         },
         margin: { left: 15, right: 15 },
         tableWidth: 'auto',
-        theme: 'grid'
+        theme: 'grid' // Adds clean grid lines
     };
 
     // Generate table
@@ -490,7 +494,7 @@ function exportData() {
     for(let i = 1; i <= pageCount; i++) {
         doc.setPage(i);
         doc.setFontSize(9);
-        doc.setTextColor(150, 150, 150);
+        doc.setTextColor(150, 150, 150); // Gray footer text
         doc.text(`Created by John Albert Retiza • Page ${i} of ${pageCount}`, 
                 doc.internal.pageSize.width / 2, 
                 doc.internal.pageSize.height - 10, 
