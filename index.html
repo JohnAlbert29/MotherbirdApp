@@ -16,7 +16,6 @@
                 <p class="current-date" id="current-date"></p>
             </div>
             <div class="header-actions">
-                <button id="sync-data" class="action-btn info">Sync Data</button>
                 <button id="export-data" class="action-btn export">Export PDF</button>
                 <button id="clear-data" class="action-btn danger">Clear All</button>
             </div>
@@ -90,28 +89,6 @@
                     <canvas id="income-chart"></canvas>
                 </div>
             </section>
-       <div id="sync-modal" class="modal">
-    <div class="modal-content">
-        <span class="close-modal">&times;</span>
-        <h3>Sync Data Between Devices</h3>
-        
-        <div class="sync-options">
-            <div class="set-code">
-                <input type="text" id="custom-code" placeholder="Set 4-digit code" maxlength="4" pattern="\d{4}">
-                <button id="set-code-btn" class="sync-btn">Set Code & Save Data</button>
-            </div>
-            
-            <div class="or-divider">or</div>
-            
-            <div class="enter-code">
-                <input type="text" id="sync-code" placeholder="Enter 4-digit code" maxlength="4">
-                <button id="retrieve-data" class="sync-btn">Retrieve Data</button>
-            </div>
-        </div>
-        
-        <div id="sync-status" class="sync-status"></div>
-    </div>
-</div>
 
         <footer class="app-footer">
             <p>Mother Bird Tracking © <span id="current-year"></span> | Created by John Albert Retiza</p>

@@ -1,16 +1,6 @@
 // Initialize data from localStorage or create empty array
 let incomeData = JSON.parse(localStorage.getItem('incomeData')) || [];
 let incomeChart = null;
-const SYNC_API_URL = 'http://localhost:3000/api/sync'; // Change to your server URL when deployed
-
-const syncModal = document.getElementById('sync-modal');
-const syncBtn = document.getElementById('sync-data');
-const closeModal = document.querySelector('.close-modal');
-const generateCodeBtn = document.getElementById('generate-code');
-const retrieveDataBtn = document.getElementById('retrieve-data');
-const syncCodeInput = document.getElementById('sync-code');
-const syncStatus = document.getElementById('sync-status');
-
 
 const transactionsPerPage = 5;
 let currentPage = 1;
@@ -27,10 +17,6 @@ const currentDateEl = document.getElementById('current-date');
 const currentYearEl = document.getElementById('current-year');
 const clearDataBtn = document.getElementById('clear-data');
 const exportDataBtn = document.getElementById('export-data');
-syncBtn.addEventListener('click', () => syncModal.style.display = 'block');
-closeModal.addEventListener('click', () => syncModal.style.display = 'none');
-generateCodeBtn.addEventListener('click', generateSyncCode);
-retrieveDataBtn.addEventListener('click', retrieveDataWithCode);
 
 // Initialize the app
 document.addEventListener('DOMContentLoaded', function() {
@@ -56,174 +42,7 @@ document.addEventListener('DOMContentLoaded', function() {
     
     clearDataBtn.addEventListener('click', clearAllData);
     exportDataBtn.addEventListener('click', exportData);
-    document.getElementById('set-code-btn').addEventListener('click', setCustomCode);
-
 });
-
-window.addEventListener('click', (e) => {
-    if (e.target === syncModal) {
-        syncModal.style.display = 'none';
-    }
-});
-
-// Restrict input to numbers only
-syncCodeInput.addEventListener('input', function() {
-    this.value = this.value.replace(/\D/g, '').slice(0, 4);
-});
-
-async function generateSyncCode() {
-    try {
-        // Show loading state
-        generateCodeBtn.disabled = true;
-        generateCodeBtn.textContent = 'Generating...';
-        syncStatus.textContent = 'Creating sync code...';
-        syncStatus.className = "";
-        
-        // Send current incomeData to server
-        const response = await fetch(SYNC_API_URL, {
-            method: 'POST',
-            headers: {
-                'Content-Type': 'application/json',  // Fixed capitalization
-            },
-            body: JSON.stringify({
-                data: incomeData
-            })
-        });
-        
-        if (!response.ok) throw new Error('Failed to upload data');
-        
-        const { code, expiresAt } = await response.json();
-        const expiresIn = Math.round((new Date(expiresAt) - Date.now()) / 60000);  // Fixed division (60000ms = 1 minute)
-        
-        // Display the code to user - Fixed template literals
-        syncStatus.textContent = `Your sync code: ${code} (Valid for ${expiresIn} minutes)`;
-        syncStatus.className = 'success';
-        
-        // Copy to clipboard automatically
-        try {
-            await navigator.clipboard.writeText(code);
-            syncStatus.textContent += ' (Copied to clipboard!)';
-        } catch (clipboardError) {
-            console.log('Clipboard copy failed', clipboardError);
-        }
-        
-    } catch (error) {
-        console.error('Sync error:', error);
-        syncStatus.textContent = 'Failed to generate code. Please try again.';
-        syncStatus.className = 'error';
-    } finally {
-        generateCodeBtn.disabled = false;
-        generateCodeBtn.textContent = 'Generate Sync Code';
-    }
-}
-
-async function setCustomCode() {
-    const customCodeInput = document.getElementById('custom-code');
-    const code = customCodeInput.value.trim();
-
-    try {
-        // Validate code
-        if (!code || code.length !== 4 || !/^\d+$/.test(code)) {
-            syncStatus.textContent = 'Please enter a valid 4-digit code';
-            syncStatus.className = 'error';
-            return;
-        }
-
-        // Validate data exists
-        if (!incomeData || incomeData.length === 0) {
-            syncStatus.textContent = 'No data to sync';
-            syncStatus.className = 'error';
-            return;
-        }
-
-        // UI Loading state
-        const setCodeBtn = document.getElementById('set-code-btn');
-        setCodeBtn.disabled = true;
-        setCodeBtn.textContent = 'Saving...';
-        syncStatus.textContent = 'Setting code and saving data...';
-        syncStatus.className = '';
-
-        // Send to server
-        const response = await fetch(SYNC_API_URL, {
-            method: 'POST',
-            headers: { 'Content-Type': 'application/json' },
-            body: JSON.stringify({ 
-                code: code,
-                data: incomeData 
-            })
-        });
-        
-        const result = await response.json();
-        
-        if (!response.ok) {
-            throw new Error(result.error || 'Failed to set code');
-        }
-
-        // Success
-        syncStatus.innerHTML = `
-            <strong>Data saved with code:</strong> ${code}<br>
-            <small>(Valid for 60 minutes)</small>
-        `;
-        syncStatus.className = 'success';
-        
-        // Copy to clipboard
-        await navigator.clipboard.writeText(code);
-        
-    } catch (error) {
-        console.error('Set code failed:', error);
-        syncStatus.textContent = error.message || 'Failed to set code';
-        syncStatus.className = 'error';
-    } finally {
-        const setCodeBtn = document.getElementById('set-code-btn');
-        setCodeBtn.disabled = false;
-        setCodeBtn.textContent = 'Set Code & Save Data';
-    }
-}
-
-async function retrieveDataWithCode() {
-    const code = syncCodeInput.value.trim();
-    
-    if (!code || code.length !== 4 || !/^\d+$/.test(code)) {
-        syncStatus.textContent = 'Please enter a valid 4-digit code';
-        syncStatus.className = 'error';
-        return;
-    }
-
-    try {
-        retrieveDataBtn.disabled = true;
-        retrieveDataBtn.textContent = 'Loading...';
-        syncStatus.textContent = 'Retrieving data...';
-        syncStatus.className = '';
-
-        const response = await fetch(`${SYNC_API_URL}/${code}`);
-        const result = await response.json();
-
-        if (!response.ok) {
-            throw new Error(result.error || 'Failed to fetch data');
-        }
-
-        // Save the retrieved data to localStorage
-        incomeData = result.data;
-        localStorage.setItem('incomeData', JSON.stringify(incomeData));
-        
-        // Update UI
-        syncStatus.textContent = 'Data retrieved successfully!';
-        syncStatus.className = 'success';
-        
-        // Refresh the display
-        renderTable();
-        updateStats();
-        renderChart();
-
-    } catch (error) {
-        console.error('Retrieval error:', error);
-        syncStatus.textContent = error.message || 'Failed to retrieve data';
-        syncStatus.className = 'error';
-    } finally {
-        retrieveDataBtn.disabled = false;
-        retrieveDataBtn.textContent = 'Retrieve Data';
-    }
-}
 
 function updateCurrentDate() {
     const options = { weekday: 'long', year: 'numeric', month: 'long', day: 'numeric' };
