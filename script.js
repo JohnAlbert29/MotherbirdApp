@@ -475,11 +475,11 @@ function exportData() {
         startY: 80,
         head: headers,
         body: data,
-        margin: { left: 10, right: 10 }, // Reduced margins for more width
-        tableWidth: 'auto', // Use maximum available width
+        margin: { horizontal: 10 }, // Reduced margins for more width
+        tableWidth: 'wrap', // Use maximum available width
         styles: {
-            fontSize: 9,
-            cellPadding: 4, // Slightly more padding
+            fontSize: 10,
+            cellPadding: 7, // Slightly more padding
             overflow: 'linebreak',
             halign: 'center', // Center all text by default
             valign: 'middle'
