@@ -488,6 +488,13 @@ function exportData() {
     doc.save(`MotherBird_Transactions_${new Date().toISOString().split('T')[0]}.pdf`);
 }
 
+function formatSimpleDate(dateString) {
+    const date = new Date(dateString);
+    const month = date.toLocaleString('default', { month: 'short' });
+    const day = date.getDate();
+    return `${month} ${day}`; // Format: "Jul 25"
+}
+
 function getDayName(dateString) {
     const days = ['Sunday', 'Monday', 'Tuesday', 'Wednesday', 'Thursday', 'Friday', 'Saturday'];
     return days[new Date(dateString).getDay()];
