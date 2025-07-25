@@ -29,35 +29,34 @@ function generateCode() {
   return Math.floor(1000 + Math.random() * 9000).toString();
 }
 
-// Store data with a sync code
+// Keep your existing POST endpoint for generating codes
 app.post('/api/sync', (req, res) => {
+  // ... (existing code generation logic)
+});
+
+// Add this GET endpoint for retrieving data
+app.get('/api/sync/:code', (req, res) => {
   try {
-    const { data } = req.body;
+    const { code } = req.params;
     
-    if (!data) {
-      return res.status(400).json({ error: 'Data is required' });
+    if (!syncStore.has(code)) {
+      return res.status(404).json({ error: 'Invalid code' });
     }
 
-    const code = generateCode();
-    const expiresAt = Date.now() + 3600000; // 1 hour expiration
+    const syncData = syncStore.get(code);
+    
+    if (syncData.expiresAt < Date.now()) {
+      syncStore.delete(code);
+      return res.status(410).json({ error: 'Code expired' });
+    }
 
-    syncStore.set(code, {
-      data,
-      expiresAt,
-      createdAt: new Date().toISOString()
+    res.json({ 
+      success: true,
+      data: syncData.data 
     });
-
-    // Schedule cleanup of expired codes
-    setTimeout(() => {
-      if (syncStore.has(code)) {  // Fixed: Added missing closing parenthesis
-        syncStore.delete(code);
-      }
-    }, 3600000);
-
-    res.json({ code, expiresAt });
+    
   } catch (error) {
-    console.error('Error storing data:', error);
-    res.status(500).json({ error: 'Internal server error' });
+    res.status(500).json({ error: 'Server error' });
   }
 });
 

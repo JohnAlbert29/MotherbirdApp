@@ -112,39 +112,46 @@ async function generateSyncCode() {
 
 async function retrieveDataWithCode() {
     const code = syncCodeInput.value.trim();
-    if (!code || code.length !== 4) {
+    
+    if (!code || code.length !== 4 || !/^\d+$/.test(code)) {
         syncStatus.textContent = 'Please enter a valid 4-digit code';
         syncStatus.className = 'error';
         return;
     }
-    
+
     try {
+        retrieveDataBtn.disabled = true;
+        retrieveDataBtn.textContent = 'Loading...';
+        syncStatus.textContent = 'Retrieving data...';
+        syncStatus.className = '';
+
         const response = await fetch(`${SYNC_API_URL}/${code}`);
-        if (!response.ok) throw new Error('Failed to fetch data');
+        const result = await response.json();
+
+        if (!response.ok) {
+            throw new Error(result.error || 'Failed to fetch data');
+        }
+
+        // Save the retrieved data to localStorage
+        incomeData = result.data;
+        localStorage.setItem('incomeData', JSON.stringify(incomeData));
         
-        const { data } = await response.json();
-        if (!data) throw new Error('No data found for this code');
-        
-        // Update local data
-        incomeData = data;
-        saveData();
-        renderTable();
-        updateStats();
-        renderChart();
-        
+        // Update UI
         syncStatus.textContent = 'Data retrieved successfully!';
         syncStatus.className = 'success';
         
-        // Close modal after 2 seconds
-        setTimeout(() => {
-            syncModal.style.display = 'none';
-            syncStatus.textContent = '';
-            syncCodeInput.value = '';
-        }, 2000);
+        // Refresh the display
+        renderTable();
+        updateStats();
+        renderChart();
+
     } catch (error) {
-        console.error('Retrieve error:', error);
-        syncStatus.textContent = 'Invalid code or data expired. Please try again.';
+        console.error('Retrieval error:', error);
+        syncStatus.textContent = error.message || 'Failed to retrieve data';
         syncStatus.className = 'error';
+    } finally {
+        retrieveDataBtn.disabled = false;
+        retrieveDataBtn.textContent = 'Retrieve Data';
     }
 }
 
