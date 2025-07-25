@@ -403,71 +403,170 @@ function exportData() {
     doc.setFont('helvetica', 'normal');
 
     // Add header
-    doc.setFontSize(16);
+    doc.setFontSize(18);
     doc.setTextColor(42, 63, 84);
     doc.text('MOTHER BIRD TRACKING SYSTEM', 105, 15, { align: 'center' });
+    
     doc.setFontSize(14);
-    doc.text('DAILY SALES RECORD', 105, 22, { align: 'center' });
+    doc.setTextColor(100, 100, 100);
+    doc.text('Sales Report', 105, 22, { align: 'center' });
 
     // Add report date
-    doc.setFontSize(11);
-    doc.setTextColor(100, 100, 100);
-    doc.text(`Report Date: ${new Date().toLocaleDateString('en-US', { 
-        weekday: 'long', 
+    doc.setFontSize(10);
+    doc.text(`Generated: ${new Date().toLocaleDateString('en-US', { 
         year: 'numeric', 
-        month: 'long', 
-        day: 'numeric' 
-    })}`, 105, 29, { align: 'center' });
+        month: 'short', 
+        day: 'numeric',
+        hour: '2-digit',
+        minute: '2-digit'
+    })}`, 105, 28, { align: 'center' });
 
-    // Add summary section
+    // Add summary section with better layout
     doc.setFontSize(12);
     doc.setTextColor(40, 40, 40);
     doc.text('SUMMARY', 20, 40);
     doc.setDrawColor(200, 200, 200);
     doc.line(20, 42, 190, 42);
 
-    doc.text(`Current Month: ₱${document.getElementById('monthly-total').textContent}`, 20, 50);
-    doc.text(`Last Month: ₱${document.getElementById('last-month-total').textContent}`, 20, 58);
+    // Summary boxes
+    doc.setFillColor(240, 240, 240);
+    doc.roundedRect(20, 45, 55, 20, 2, 2, 'F');
+    doc.roundedRect(80, 45, 55, 20, 2, 2, 'F');
+    doc.roundedRect(140, 45, 55, 20, 2, 2, 'F');
+
+    // Summary content
+    doc.setFontSize(11);
+    doc.setTextColor(100, 100, 100);
+    doc.text('Current Month', 27, 50);
+    doc.text('Last Month', 87, 50);
+    doc.text('Growth', 147, 50);
+
+    doc.setFontSize(12);
+    doc.setTextColor(40, 40, 40);
+    doc.text(document.getElementById('monthly-total').textContent, 27, 58);
+    doc.text(document.getElementById('last-month-total').textContent, 87, 58);
     
-    const growthText = `Growth: ${document.getElementById('growth-percentage').textContent}`;
     const growthValue = parseFloat(document.getElementById('growth-percentage').textContent);
     if (growthValue >= 0) {
         doc.setTextColor(39, 174, 96); // Green
     } else {
         doc.setTextColor(231, 76, 60); // Red
     }
-    doc.text(growthText, 20, 66);
+    doc.text(document.getElementById('growth-percentage').textContent, 147, 58);
     doc.setTextColor(40, 40, 40); // Reset color
 
-    // Add transaction section
+    // Add transaction section with proper table
     doc.setFontSize(12);
-    doc.text('TRANSACTIONS', 20, 80);
-    doc.line(20, 82, 190, 82);
+    doc.text('TRANSACTION DETAILS', 20, 75);
+    doc.line(20, 77, 190, 77);
 
-    // Add transaction data in simple format
-    let yPosition = 90;
-    incomeData.forEach(entry => {
-        if (yPosition > 270) { // Add new page if running out of space
-            doc.addPage();
-            yPosition = 20;
-            doc.setFontSize(12);
-            doc.text('TRANSACTIONS (continued)', 20, yPosition);
-            yPosition = 30;
+    // Prepare data for the table
+    const headers = [['Date', 'Day', 'Cash (₱)', 'Coins (₱)', 'Total (₱)']];
+    const data = incomeData.map(entry => [
+        formatSimpleDate(entry.date),
+        entry.day.substring(0, 3),
+        entry.paperMoney.toFixed(2),
+        entry.coins.toFixed(2),
+        entry.total.toFixed(2)
+    ]);
+
+    // Add the table
+    doc.autoTable({
+        startY: 80,
+        head: headers,
+        body: data,
+        margin: { left: 20, right: 20 },
+        styles: {
+            fontSize: 9,
+            cellPadding: 3,
+            overflow: 'linebreak'
+        },
+        headStyles: {
+            fillColor: [42, 63, 84],
+            textColor: 255,
+            fontStyle: 'bold'
+        },
+        alternateRowStyles: {
+            fillColor: [240, 240, 240]
+        },
+        columnStyles: {
+            0: { cellWidth: 25 },
+            1: { cellWidth: 20 },
+            2: { cellWidth: 25, halign: 'right' },
+            3: { cellWidth: 25, halign: 'right' },
+            4: { cellWidth: 25, halign: 'right' }
+        },
+        didDrawPage: function(data) {
+            // Footer
+            doc.setFontSize(9);
+            doc.setTextColor(150, 150, 150);
+            doc.text('Created by John Albert Retiza', 105, doc.internal.pageSize.height - 10, { align: 'center' });
+            doc.text(`Page ${doc.internal.getNumberOfPages()}`, 105, doc.internal.pageSize.height - 5, { align: 'center' });
         }
-
-        const transactionText = `${formatSimpleDate(entry.date)} - ${entry.day.substring(0, 3)} - ₱${entry.paperMoney.toFixed(2)} - ₱${entry.coins.toFixed(2)} - ₱${entry.total.toFixed(2)}`;
-        doc.text(transactionText, 25, yPosition);
-        yPosition += 7;
     });
 
-    // Add footer
-    doc.setFontSize(9);
-    doc.setTextColor(150, 150, 150);
-    doc.text('Created by John Albert Retiza', 105, doc.internal.pageSize.height - 15, { align: 'center' });
-    doc.text(`Page ${doc.internal.getNumberOfPages()}`, 105, doc.internal.pageSize.height - 10, { align: 'center' });
+    // Add monthly summary chart
+    const monthlyData = {};
+    incomeData.forEach(entry => {
+        const date = new Date(entry.date);
+        const monthYear = `${date.toLocaleString('default', { month: 'short' })} ${date.getFullYear()}`;
+        
+        if (!monthlyData[monthYear]) {
+            monthlyData[monthYear] = 0;
+        }
+        monthlyData[monthYear] += entry.total;
+    });
+
+    const chartLabels = Object.keys(monthlyData);
+    const chartData = Object.values(monthlyData);
+
+    if (chartLabels.length > 0) {
+        doc.addPage();
+        doc.setFontSize(12);
+        doc.text('MONTHLY SUMMARY', 20, 20);
+        doc.line(20, 22, 190, 22);
+
+        // Create a simple bar chart representation
+        const startX = 30;
+        const startY = 40;
+        const chartWidth = 150;
+        const chartHeight = 100;
+        const maxValue = Math.max(...chartData);
+        const barWidth = chartWidth / chartLabels.length;
+
+        // Draw axes
+        doc.line(startX, startY, startX, startY + chartHeight);
+        doc.line(startX, startY + chartHeight, startX + chartWidth, startY + chartHeight);
+
+        // Draw bars and labels
+        chartLabels.forEach((label, i) => {
+            const barHeight = (chartData[i] / maxValue) * chartHeight;
+            const x = startX + (i * barWidth) + 5;
+            const y = startY + chartHeight - barHeight;
+            
+            // Bar
+            doc.setFillColor(26, 187, 156);
+            doc.rect(x, y, barWidth - 10, barHeight, 'F');
+            
+            // Value label
+            doc.setFontSize(8);
+            doc.setTextColor(40, 40, 40);
+            doc.text(`₱${chartData[i].toFixed(2)}`, x + (barWidth/2) - 10, y - 5);
+            
+            // Month label
+            doc.text(label, x + (barWidth/2) - 10, startY + chartHeight + 5);
+        });
+
+        // Add scale markers
+        for (let i = 0; i <= 5; i++) {
+            const y = startY + chartHeight - (i * (chartHeight / 5));
+            doc.line(startX - 2, y, startX, y);
+            doc.text(`₱${Math.round(maxValue * (i/5))}`, startX - 5, y, { align: 'right' });
+        }
+    }
 
     // Save PDF
-    doc.save(`MotherBird_Sales_${new Date().toISOString().split('T')[0]}.pdf`);
+    doc.save(`MotherBird_Sales_Report_${new Date().toISOString().split('T')[0]}.pdf`);
 }
 
 // Simple date format: Jul 25
