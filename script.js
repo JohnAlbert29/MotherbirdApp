@@ -491,11 +491,11 @@ function exportData() {
             halign: 'center'
         },
         columnStyles: {
-            0: { cellWidth: 25, halign: 'center' }, // Date
-            1: { cellWidth: 15, halign: 'center' }, // Day
-            2: { cellWidth: 30, halign: 'right' },  // Cash - right aligned for numbers
-            3: { cellWidth: 30, halign: 'right' },  // Coins - right aligned for numbers
-            4: { cellWidth: 30, halign: 'right' }   // Total - right aligned for numbers
+            0: { cellWidth: 35, halign: 'center' }, // Date
+            1: { cellWidth: 20, halign: 'center' }, // Day
+            2: { cellWidth: 40, halign: 'right' },  // Cash - right aligned for numbers
+            3: { cellWidth: 40, halign: 'right' },  // Coins - right aligned for numbers
+            4: { cellWidth: 40, halign: 'right' }   // Total - right aligned for numbers
         },
         alternateRowStyles: {
             fillColor: [240, 240, 240]
