@@ -479,7 +479,7 @@ function exportData() {
         tableWidth: 'wrap', // Use maximum available width
         styles: {
             fontSize: 9,
-            cellPadding: 8, // Slightly more padding
+            cellPadding: 5, // Slightly more padding
             overflow: 'linebreak',
             halign: 'center', // Center all text by default
             valign: 'middle'
