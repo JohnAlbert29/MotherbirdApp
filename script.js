@@ -396,7 +396,7 @@ function exportData() {
     const { jsPDF } = window.jspdf;
     const doc = new jsPDF({
         orientation: incomeData.length > 15 ? 'landscape' : 'portrait',
-        unit: 'mm' // Using millimeters for more precise control
+        unit: 'mm'
     });
 
     // Set default font
@@ -404,7 +404,7 @@ function exportData() {
 
     // Title
     doc.setFontSize(18);
-    doc.setTextColor(42, 63, 84); // Using your primary color
+    doc.setTextColor(42, 63, 84);
     doc.text('Mother Bird Tracking Report', 105, 20, { align: 'center' });
 
     // Generation date
@@ -430,7 +430,7 @@ function exportData() {
     // Growth percentage with color coding
     const growthText = `Growth Percentage: ${document.getElementById('growth-percentage').textContent}`;
     const growthValue = parseFloat(document.getElementById('growth-percentage').textContent);
-    doc.setTextColor(growthValue >= 0 ? 39, 174, 96 : 231, 76, 60); // Green or red
+    doc.setTextColor(growthValue >= 0 ? [39, 174, 96] : [231, 76, 60]);
     doc.text(growthText, 105, 58, { align: 'center' });
 
     // Transaction table
@@ -440,7 +440,7 @@ function exportData() {
 
     // Prepare table data with proper number formatting
     const tableData = incomeData.map(entry => [
-        formatDate(entry.date),
+        formatPdfDate(entry.date),
         entry.day.substring(0, 3),
         numberWithCommas(entry.paperMoney.toFixed(2)),
         numberWithCommas(entry.coins.toFixed(2)),
@@ -471,15 +471,15 @@ function exportData() {
             overflow: 'linebreak'
         },
         columnStyles: {
-            0: { cellWidth: 25 }, // Date
-            1: { cellWidth: 15 }, // Day
-            2: { cellWidth: 25 }, // Cash
-            3: { cellWidth: 25 }, // Coins
-            4: { cellWidth: 25 }  // Total
+            0: { cellWidth: 25 },
+            1: { cellWidth: 15 },
+            2: { cellWidth: 25 },
+            3: { cellWidth: 25 },
+            4: { cellWidth: 25 }
         },
         margin: { left: 15, right: 15 },
         tableWidth: 'auto',
-        theme: 'grid' // Adds clean grid lines
+        theme: 'grid'
     };
 
     // Generate table
@@ -506,14 +506,11 @@ function numberWithCommas(x) {
     return x.toString().replace(/\B(?=(\d{3})+(?!\d))/g, ",");
 }
 
-// Helper function for date formatting
-function formatDate(dateString) {
+// Special date formatting for PDF (more compact)
+function formatPdfDate(dateString) {
     const date = new Date(dateString);
-    return date.toLocaleDateString('en-US', {
-        month: 'short',
-        day: 'numeric',
-        year: 'numeric'
-    });
+    const month = date.toLocaleString('default', { month: 'short' });
+    return `${month} ${date.getDate()}, ${date.getFullYear()}`;
 }
 
 function getDayName(dateString) {
