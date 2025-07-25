@@ -20,7 +20,6 @@
     padding: 0;
 }
 
-
 body {
     font-family: 'Montserrat', sans-serif;
     background-color: #f5f7fa;
@@ -85,6 +84,22 @@ body {
 
 .action-btn.danger:hover {
     background-color: #c0392b;
+}
+
+.action-btn.info {
+    background-color: var(--info);
+}
+
+.action-btn.info:hover {
+    background-color: #2980b9;
+}
+
+.action-btn.success {
+    background-color: var(--success);
+}
+
+.action-btn.success:hover {
+    background-color: #219653;
 }
 
 .app-main {
@@ -289,7 +304,6 @@ tr:hover {
     opacity: 0.8;
 }
 
-/* Add these to your existing CSS */
 .month-navigation {
     display: flex;
     align-items: center;
@@ -338,15 +352,6 @@ tr:hover {
     background-color: #2980b9;
 }
 
-.action-btn.export {
-    background-color: var(--success);
-}
-
-.action-btn.export:hover {
-    background-color: #219653;
-}
-
-/* Responsive styles */
 @media (max-width: 768px) {
     .app-header {
         flex-direction: column;

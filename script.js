@@ -17,6 +17,9 @@ const currentDateEl = document.getElementById('current-date');
 const currentYearEl = document.getElementById('current-year');
 const clearDataBtn = document.getElementById('clear-data');
 const exportDataBtn = document.getElementById('export-data');
+const exportPdfBtn = document.getElementById('export-pdf');
+const importDataBtn = document.getElementById('import-data');
+const fileInput = document.getElementById('file-input');
 
 // Initialize the app
 document.addEventListener('DOMContentLoaded', function() {
@@ -42,6 +45,9 @@ document.addEventListener('DOMContentLoaded', function() {
     
     clearDataBtn.addEventListener('click', clearAllData);
     exportDataBtn.addEventListener('click', exportData);
+    exportPdfBtn.addEventListener('click', exportPDF);
+    importDataBtn.addEventListener('click', () => fileInput.click());
+    fileInput.addEventListener('change', importData);
 });
 
 function updateCurrentDate() {
@@ -388,6 +394,87 @@ function clearAllData() {
 }
 
 function exportData() {
+    if (incomeData.length === 0) {
+        alert('No data to export!');
+        return;
+    }
+
+    // Create export object with data and metadata
+    const exportObj = {
+        app: "MotherBirdApp",
+        version: "1.0",
+        exportedAt: new Date().toISOString(),
+        data: incomeData
+    };
+
+    // Create JSON string
+    const dataStr = JSON.stringify(exportObj, null, 2);
+    const dataUri = 'data:application/json;charset=utf-8,'+ encodeURIComponent(dataStr);
+    
+    // Create download link
+    const exportFileDefaultName = `MotherBird_Data_${new Date().toISOString().split('T')[0]}.json`;
+    
+    const linkElement = document.createElement('a');
+    linkElement.setAttribute('href', dataUri);
+    linkElement.setAttribute('download', exportFileDefaultName);
+    linkElement.click();
+}
+
+function importData(event) {
+    const file = event.target.files[0];
+    if (!file) return;
+
+    const reader = new FileReader();
+    reader.onload = function(e) {
+        try {
+            const importedData = JSON.parse(e.target.result);
+            
+            // Basic validation
+            if (!importedData.app || importedData.app !== "MotherBirdApp") {
+                throw new Error("This doesn't appear to be a MotherBirdApp data file");
+            }
+            
+            if (!Array.isArray(importedData.data)) {
+                throw new Error("Invalid data format");
+            }
+            
+            // Ask user if they want to replace or merge data
+            if (incomeData.length > 0) {
+                const choice = confirm("Would you like to:\n\nOK - Replace all current data\nCancel - Merge with existing data");
+                
+                if (choice) {
+                    // Replace data
+                    incomeData = importedData.data;
+                } else {
+                    // Merge data (avoid duplicates by ID)
+                    const existingIds = new Set(incomeData.map(item => item.id));
+                    const newItems = importedData.data.filter(item => !existingIds.has(item.id));
+                    incomeData = [...incomeData, ...newItems];
+                }
+            } else {
+                incomeData = importedData.data;
+            }
+            
+            saveData();
+            renderTable();
+            updateStats();
+            renderChart();
+            
+            alert(`Successfully imported ${importedData.data.length} transactions`);
+            
+        } catch (error) {
+            alert("Error importing data: " + error.message);
+            console.error(error);
+        }
+        
+        // Reset file input
+        event.target.value = '';
+    };
+    
+    reader.readAsText(file);
+}
+
+function exportPDF() {
     if (incomeData.length === 0) {
         alert('No data to export!');
         return;

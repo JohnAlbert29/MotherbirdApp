@@ -10,14 +10,16 @@
 <body>
     <div class="app-container">
         <header class="app-header">
-            
             <div class="header-content">
                 <h1>Mother Bird Tracking</h1>
                 <p class="current-date" id="current-date"></p>
             </div>
             <div class="header-actions">
-                <button id="export-data" class="action-btn export">Export PDF</button>
+                <button id="import-data" class="action-btn info">Import Data</button>
+                <button id="export-data" class="action-btn export">Export Data</button>
+                <button id="export-pdf" class="action-btn success">Export PDF</button>
                 <button id="clear-data" class="action-btn danger">Clear All</button>
+                <input type="file" id="file-input" accept=".json" style="display:none;">
             </div>
         </header>
 
@@ -61,7 +63,6 @@
                 </form>
             </section>
 
-
             <section class="transaction-history">
                 <h2>Transaction History</h2>
                 <div class="table-container">
@@ -84,11 +85,11 @@
             </section>
         </main>
 
-         <section class="data-visualization">
-                <div class="chart-container">
-                    <canvas id="income-chart"></canvas>
-                </div>
-            </section>
+        <section class="data-visualization">
+            <div class="chart-container">
+                <canvas id="income-chart"></canvas>
+            </div>
+        </section>
 
         <footer class="app-footer">
             <p>Mother Bird Tracking © <span id="current-year"></span> | Created by John Albert Retiza</p>
