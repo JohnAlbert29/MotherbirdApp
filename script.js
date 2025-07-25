@@ -1,6 +1,15 @@
 // Initialize data from localStorage or create empty array
 let incomeData = JSON.parse(localStorage.getItem('incomeData')) || [];
 let incomeChart = null;
+const SYNC_API_URL = 'http://localhost:3000/api/sync'; // Change to your server URL when deployed
+
+const syncModal = document.getElementById('sync-modal');
+const syncBtn = document.getElementById('sync-data');
+const closeModal = document.querySelector('.close-modal');
+const generateCodeBtn = document.getElementById('generate-code');
+const retrieveDataBtn = document.getElementById('retrieve-data');
+const syncCodeInput = document.getElementById('sync-code');
+const syncStatus = document.getElementById('sync-status');
 
 const transactionsPerPage = 5;
 let currentPage = 1;
@@ -17,6 +26,10 @@ const currentDateEl = document.getElementById('current-date');
 const currentYearEl = document.getElementById('current-year');
 const clearDataBtn = document.getElementById('clear-data');
 const exportDataBtn = document.getElementById('export-data');
+syncBtn.addEventListener('click', () => syncModal.style.display = 'block');
+closeModal.addEventListener('click', () => syncModal.style.display = 'none');
+generateCodeBtn.addEventListener('click', generateSyncCode);
+retrieveDataBtn.addEventListener('click', retrieveDataWithCode);
 
 // Initialize the app
 document.addEventListener('DOMContentLoaded', function() {
@@ -43,6 +56,97 @@ document.addEventListener('DOMContentLoaded', function() {
     clearDataBtn.addEventListener('click', clearAllData);
     exportDataBtn.addEventListener('click', exportData);
 });
+
+// Close modal when clicking outside
+window.addEventListener('click', (e) => {
+    if (e.target === syncModal) {
+        syncModal.style.display = 'none';
+    }
+});
+
+async function generateSyncCode() {
+    try {
+        // Show loading state
+        generateCodeBtn.disabled = true;
+        generateCodeBtn.textContent = 'Generating...';
+        syncStatus.textContent = 'Creating sync code...';
+        syncStatus.className = "";
+        
+        // Send current incomeData to server
+        const response = await fetch(SYNC_API_URL, {
+            method: 'POST',
+            headers: {
+                'Content-Type': 'application/json',  // Fixed capitalization
+            },
+            body: JSON.stringify({
+                data: incomeData
+            })
+        });
+        
+        if (!response.ok) throw new Error('Failed to upload data');
+        
+        const { code, expiresAt } = await response.json();
+        const expiresIn = Math.round((new Date(expiresAt) - Date.now()) / 60000);  // Fixed division (60000ms = 1 minute)
+        
+        // Display the code to user - Fixed template literals
+        syncStatus.textContent = `Your sync code: ${code} (Valid for ${expiresIn} minutes)`;
+        syncStatus.className = 'success';
+        
+        // Copy to clipboard automatically
+        try {
+            await navigator.clipboard.writeText(code);
+            syncStatus.textContent += ' (Copied to clipboard!)';
+        } catch (clipboardError) {
+            console.log('Clipboard copy failed', clipboardError);
+        }
+        
+    } catch (error) {
+        console.error('Sync error:', error);
+        syncStatus.textContent = 'Failed to generate code. Please try again.';
+        syncStatus.className = 'error';
+    } finally {
+        generateCodeBtn.disabled = false;
+        generateCodeBtn.textContent = 'Generate Sync Code';
+    }
+}
+
+async function retrieveDataWithCode() {
+    const code = syncCodeInput.value.trim();
+    if (!code || code.length !== 4) {
+        syncStatus.textContent = 'Please enter a valid 4-digit code';
+        syncStatus.className = 'error';
+        return;
+    }
+    
+    try {
+        const response = await fetch(`${SYNC_API_URL}/${code}`);
+        if (!response.ok) throw new Error('Failed to fetch data');
+        
+        const { data } = await response.json();
+        if (!data) throw new Error('No data found for this code');
+        
+        // Update local data
+        incomeData = data;
+        saveData();
+        renderTable();
+        updateStats();
+        renderChart();
+        
+        syncStatus.textContent = 'Data retrieved successfully!';
+        syncStatus.className = 'success';
+        
+        // Close modal after 2 seconds
+        setTimeout(() => {
+            syncModal.style.display = 'none';
+            syncStatus.textContent = '';
+            syncCodeInput.value = '';
+        }, 2000);
+    } catch (error) {
+        console.error('Retrieve error:', error);
+        syncStatus.textContent = 'Invalid code or data expired. Please try again.';
+        syncStatus.className = 'error';
+    }
+}
 
 function updateCurrentDate() {
     const options = { weekday: 'long', year: 'numeric', month: 'long', day: 'numeric' };
