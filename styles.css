@@ -346,6 +346,7 @@ tr:hover {
     background-color: #219653;
 }
 
+/* Sync Modal Styles */
 .modal {
     display: none;
     position: fixed;
@@ -354,17 +355,17 @@ tr:hover {
     top: 0;
     width: 100%;
     height: 100%;
-    background-color: rgba(0, 0, 0, 0.5);
+    background-color: rgba(0,0,0,0.5);
 }
 
 .modal-content {
     background-color: white;
     margin: 10% auto;
-    padding: 2rem;
+    padding: 20px;
     border-radius: 8px;
     width: 90%;
     max-width: 400px;
-    box-shadow: 0 4px 20px rgba(0, 0, 0, 0.2);
+    box-shadow: 0 4px 20px rgba(0,0,0,0.2);
 }
 
 .close-modal {
@@ -380,7 +381,7 @@ tr:hover {
     margin: 1.5rem 0;
 }
 
-.sync-options button {
+.sync-btn {
     padding: 0.8rem;
     border: none;
     border-radius: 4px;
@@ -391,7 +392,7 @@ tr:hover {
     transition: background-color 0.3s ease;
 }
 
-.sync-options button:hover {
+.sync-btn:hover {
     background-color: var(--dark);
 }
 
@@ -402,45 +403,43 @@ tr:hover {
 
 #sync-code {
     flex: 1;
+    padding: 0.8rem;
     text-align: center;
     font-size: 1.2rem;
     letter-spacing: 2px;
+    border: 1px solid var(--border);
+    border-radius: 4px;
 }
 
 .or-divider {
+    display: flex;
+    align-items: center;
     text-align: center;
-    position: relative;
     margin: 1rem 0;
+    color: var(--text-light);
 }
 
-.or-divider::before, .or-divider::after {
+.or-divider::before,
+.or-divider::after {
     content: "";
     flex: 1;
     border-bottom: 1px solid var(--border);
-    margin: auto;
+    margin: 0 1rem;
 }
 
-.or-divider::before {
-    margin-right: 1rem;
-}
-
-.or-divider::after {
-    margin-left: 1rem;
-}
-
-#sync-status {
+.sync-status {
     margin-top: 1rem;
     padding: 0.8rem;
     border-radius: 4px;
     text-align: center;
 }
 
-.success {
+.sync-status.success {
     background-color: rgba(39, 174, 96, 0.1);
     color: var(--success);
 }
 
-.error {
+.sync-status.error {
     background-color: rgba(231, 76, 60, 0.1);
     color: var(--danger);
 }

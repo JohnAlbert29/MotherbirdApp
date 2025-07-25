@@ -90,21 +90,25 @@
                     <canvas id="income-chart"></canvas>
                 </div>
             </section>
-        <div id="sync-modal" class="modal">
-            <div class="modal-content">
-                <span class="close-modal">&times;</span>
-                <h3>Sync Data Between Devices</h3>
-                    <div class="sync-options">
-                    <button id="generate-code">Generate Sync Code</button>
-                    <div class="or-divider">or</div>
-                    <div class="enter-code">
-                        <input type="text" id="sync-code" placeholder="Enter 4-digit code" maxlength="4">
-                        <button id="retrieve-data">Retrieve Data</button>
-                    </div>
-             </div>
-                <div id="sync-status"></div>
+       <div id="sync-modal" class="modal">
+    <div class="modal-content">
+        <span class="close-modal">&times;</span>
+        <h3>Sync Data Between Devices</h3>
+        
+        <div class="sync-options">
+            <button id="generate-code" class="sync-btn">Generate Sync Code</button>
+            
+            <div class="or-divider">or</div>
+            
+            <div class="enter-code">
+                <input type="text" id="sync-code" placeholder="Enter 4-digit code" maxlength="4" pattern="\d{4}">
+                <button id="retrieve-data" class="sync-btn">Retrieve Data</button>
             </div>
         </div>
+        
+        <div id="sync-status" class="sync-status"></div>
+    </div>
+</div>
 
         <footer class="app-footer">
             <p>Mother Bird Tracking © <span id="current-year"></span> | Created by John Albert Retiza</p>

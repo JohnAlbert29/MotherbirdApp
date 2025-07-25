@@ -11,6 +11,7 @@ const retrieveDataBtn = document.getElementById('retrieve-data');
 const syncCodeInput = document.getElementById('sync-code');
 const syncStatus = document.getElementById('sync-status');
 
+
 const transactionsPerPage = 5;
 let currentPage = 1;
 let currentMonthView = new Date().getMonth();
@@ -57,11 +58,15 @@ document.addEventListener('DOMContentLoaded', function() {
     exportDataBtn.addEventListener('click', exportData);
 });
 
-// Close modal when clicking outside
 window.addEventListener('click', (e) => {
     if (e.target === syncModal) {
         syncModal.style.display = 'none';
     }
+});
+
+// Restrict input to numbers only
+syncCodeInput.addEventListener('input', function() {
+    this.value = this.value.replace(/\D/g, '').slice(0, 4);
 });
 
 async function generateSyncCode() {
