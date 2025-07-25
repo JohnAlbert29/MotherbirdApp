@@ -7,9 +7,53 @@
     <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Montserrat:wght@300;400;500;600;700&display=swap">
     <link rel="stylesheet" href="styles.css">
 </head>
+
+<!-- Add this right after the <body> tag -->
+<div id="auth-overlay" class="auth-overlay">
+    <div class="auth-container">
+        <div class="auth-tabs">
+            <button class="auth-tab active" data-tab="login">Login</button>
+            <button class="auth-tab" data-tab="signup">Sign Up</button>
+        </div>
+        
+        <form id="login-form" class="auth-form active">
+            <div class="form-group">
+                <label for="login-email">Email</label>
+                <input type="email" id="login-email" required>
+            </div>
+            <div class="form-group">
+                <label for="login-password">Password</label>
+                <input type="password" id="login-password" required>
+            </div>
+            <button type="submit" class="submit-btn">Login</button>
+        </form>
+        
+        <form id="signup-form" class="auth-form">
+            <div class="form-group">
+                <label for="signup-email">Email</label>
+                <input type="email" id="signup-email" required>
+            </div>
+            <div class="form-group">
+                <label for="signup-password">Password (min 6 characters)</label>
+                <input type="password" id="signup-password" minlength="6" required>
+            </div>
+            <div class="form-group">
+                <label for="signup-name">Store Name</label>
+                <input type="text" id="signup-name" required>
+            </div>
+            <button type="submit" class="submit-btn">Create Account</button>
+        </form>
+    </div>
+</div>
+
 <body>
     <div class="app-container">
         <header class="app-header">
+            <!-- Add this to the header section -->
+            <div class="user-info" id="user-info" style="display: none;">
+            <span id="user-email"></span>
+             <button id="logout-btn" class="action-btn danger">Logout</button>
+            </div>
             
             <div class="header-content">
                 <h1>Mother Bird Tracking</h1>
@@ -95,6 +139,9 @@
         </footer>
     </div>
 
+    <script src="https://www.gstatic.com/firebasejs/9.6.0/firebase-app-compat.js"></script>
+    <script src="https://www.gstatic.com/firebasejs/9.6.0/firebase-auth-compat.js"></script>
+    <script src="https://www.gstatic.com/firebasejs/9.6.0/firebase-firestore-compat.js"></script>
     <script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.1/jspdf.umd.min.js"></script>
     <script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf-autotable/3.5.28/jspdf.plugin.autotable.min.js"></script>
     <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
