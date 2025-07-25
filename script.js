@@ -470,31 +470,35 @@ function exportData() {
         entry.total.toFixed(2)
     ]);
 
-    // Add the table
+    // Add the table with wider columns and centered
     doc.autoTable({
         startY: 80,
         head: headers,
         body: data,
-        margin: { left: 20, right: 20 },
+        margin: { left: 10, right: 10 }, // Reduced margins for more width
+        tableWidth: 'auto', // Use maximum available width
         styles: {
             fontSize: 9,
-            cellPadding: 3,
-            overflow: 'linebreak'
+            cellPadding: 4, // Slightly more padding
+            overflow: 'linebreak',
+            halign: 'center', // Center all text by default
+            valign: 'middle'
         },
         headStyles: {
             fillColor: [42, 63, 84],
             textColor: 255,
-            fontStyle: 'bold'
+            fontStyle: 'bold',
+            halign: 'center'
+        },
+        columnStyles: {
+            0: { cellWidth: 25, halign: 'center' }, // Date
+            1: { cellWidth: 15, halign: 'center' }, // Day
+            2: { cellWidth: 30, halign: 'right' },  // Cash - right aligned for numbers
+            3: { cellWidth: 30, halign: 'right' },  // Coins - right aligned for numbers
+            4: { cellWidth: 30, halign: 'right' }   // Total - right aligned for numbers
         },
         alternateRowStyles: {
             fillColor: [240, 240, 240]
-        },
-        columnStyles: {
-            0: { cellWidth: 25 },
-            1: { cellWidth: 20 },
-            2: { cellWidth: 25, halign: 'right' },
-            3: { cellWidth: 25, halign: 'right' },
-            4: { cellWidth: 25, halign: 'right' }
         },
         didDrawPage: function(data) {
             // Footer
@@ -504,66 +508,6 @@ function exportData() {
             doc.text(`Page ${doc.internal.getNumberOfPages()}`, 105, doc.internal.pageSize.height - 5, { align: 'center' });
         }
     });
-
-    // Add monthly summary chart
-    const monthlyData = {};
-    incomeData.forEach(entry => {
-        const date = new Date(entry.date);
-        const monthYear = `${date.toLocaleString('default', { month: 'short' })} ${date.getFullYear()}`;
-        
-        if (!monthlyData[monthYear]) {
-            monthlyData[monthYear] = 0;
-        }
-        monthlyData[monthYear] += entry.total;
-    });
-
-    const chartLabels = Object.keys(monthlyData);
-    const chartData = Object.values(monthlyData);
-
-    if (chartLabels.length > 0) {
-        doc.addPage();
-        doc.setFontSize(12);
-        doc.text('MONTHLY SUMMARY', 20, 20);
-        doc.line(20, 22, 190, 22);
-
-        // Create a simple bar chart representation
-        const startX = 30;
-        const startY = 40;
-        const chartWidth = 150;
-        const chartHeight = 100;
-        const maxValue = Math.max(...chartData);
-        const barWidth = chartWidth / chartLabels.length;
-
-        // Draw axes
-        doc.line(startX, startY, startX, startY + chartHeight);
-        doc.line(startX, startY + chartHeight, startX + chartWidth, startY + chartHeight);
-
-        // Draw bars and labels
-        chartLabels.forEach((label, i) => {
-            const barHeight = (chartData[i] / maxValue) * chartHeight;
-            const x = startX + (i * barWidth) + 5;
-            const y = startY + chartHeight - barHeight;
-            
-            // Bar
-            doc.setFillColor(26, 187, 156);
-            doc.rect(x, y, barWidth - 10, barHeight, 'F');
-            
-            // Value label
-            doc.setFontSize(8);
-            doc.setTextColor(40, 40, 40);
-            doc.text(`₱${chartData[i].toFixed(2)}`, x + (barWidth/2) - 10, y - 5);
-            
-            // Month label
-            doc.text(label, x + (barWidth/2) - 10, startY + chartHeight + 5);
-        });
-
-        // Add scale markers
-        for (let i = 0; i <= 5; i++) {
-            const y = startY + chartHeight - (i * (chartHeight / 5));
-            doc.line(startX - 2, y, startX, y);
-            doc.text(`₱${Math.round(maxValue * (i/5))}`, startX - 5, y, { align: 'right' });
-        }
-    }
 
     // Save PDF
     doc.save(`MotherBird_Sales_Report_${new Date().toISOString().split('T')[0]}.pdf`);
