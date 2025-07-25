@@ -96,12 +96,15 @@
         <h3>Sync Data Between Devices</h3>
         
         <div class="sync-options">
-            <button id="generate-code" class="sync-btn">Generate Sync Code</button>
+            <div class="set-code">
+                <input type="text" id="custom-code" placeholder="Set 4-digit code" maxlength="4" pattern="\d{4}">
+                <button id="set-code-btn" class="sync-btn">Set Code & Save Data</button>
+            </div>
             
             <div class="or-divider">or</div>
             
             <div class="enter-code">
-                <input type="text" id="sync-code" placeholder="Enter 4-digit code" maxlength="4" pattern="\d{4}">
+                <input type="text" id="sync-code" placeholder="Enter 4-digit code" maxlength="4">
                 <button id="retrieve-data" class="sync-btn">Retrieve Data</button>
             </div>
         </div>

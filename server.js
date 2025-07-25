@@ -29,35 +29,42 @@ function generateCode() {
   return Math.floor(1000 + Math.random() * 9000).toString();
 }
 
-// Keep your existing POST endpoint for generating codes
 app.post('/api/sync', (req, res) => {
-  // ... (existing code generation logic)
-});
+    try {
+        const { code, data } = req.body;
+        
+        // 1. First validate the code format
+        if (!code || !/^\d{4}$/.test(code)) {
+            return res.status(400).json({ error: 'Invalid 4-digit code format' });
+        }
 
-// Add this GET endpoint for retrieving data
-app.get('/api/sync/:code', (req, res) => {
-  try {
-    const { code } = req.params;
-    
-    if (!syncStore.has(code)) {
-      return res.status(404).json({ error: 'Invalid code' });
+        // 2. Then check if data exists
+        if (!data) {
+            return res.status(400).json({ error: 'Data is required' });
+        }
+
+        // 3. NOW check for code conflicts
+        if (syncStore.has(code)) {
+            return res.status(409).json({ error: 'Code already in use' });
+        }
+
+        // 4. Only if all checks pass, store the data
+        const expiresAt = Date.now() + 3600000; // 1 hour expiration
+        syncStore.set(code, {
+            data,
+            expiresAt,
+            createdAt: new Date().toISOString()
+        });
+
+        res.json({ 
+            success: true,
+            code,
+            expiresAt
+        });
+
+    } catch (error) {
+        res.status(500).json({ error: 'Server error' });
     }
-
-    const syncData = syncStore.get(code);
-    
-    if (syncData.expiresAt < Date.now()) {
-      syncStore.delete(code);
-      return res.status(410).json({ error: 'Code expired' });
-    }
-
-    res.json({ 
-      success: true,
-      data: syncData.data 
-    });
-    
-  } catch (error) {
-    res.status(500).json({ error: 'Server error' });
-  }
 });
 
 // Retrieve data with a sync code

@@ -56,6 +56,8 @@ document.addEventListener('DOMContentLoaded', function() {
     
     clearDataBtn.addEventListener('click', clearAllData);
     exportDataBtn.addEventListener('click', exportData);
+    document.getElementById('set-code-btn').addEventListener('click', setCustomCode);
+
 });
 
 window.addEventListener('click', (e) => {
@@ -112,6 +114,69 @@ async function generateSyncCode() {
     } finally {
         generateCodeBtn.disabled = false;
         generateCodeBtn.textContent = 'Generate Sync Code';
+    }
+}
+
+async function setCustomCode() {
+    const customCodeInput = document.getElementById('custom-code');
+    const code = customCodeInput.value.trim();
+
+    try {
+        // Validate code
+        if (!code || code.length !== 4 || !/^\d+$/.test(code)) {
+            syncStatus.textContent = 'Please enter a valid 4-digit code';
+            syncStatus.className = 'error';
+            return;
+        }
+
+        // Validate data exists
+        if (!incomeData || incomeData.length === 0) {
+            syncStatus.textContent = 'No data to sync';
+            syncStatus.className = 'error';
+            return;
+        }
+
+        // UI Loading state
+        const setCodeBtn = document.getElementById('set-code-btn');
+        setCodeBtn.disabled = true;
+        setCodeBtn.textContent = 'Saving...';
+        syncStatus.textContent = 'Setting code and saving data...';
+        syncStatus.className = '';
+
+        // Send to server
+        const response = await fetch(SYNC_API_URL, {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({ 
+                code: code,
+                data: incomeData 
+            })
+        });
+        
+        const result = await response.json();
+        
+        if (!response.ok) {
+            throw new Error(result.error || 'Failed to set code');
+        }
+
+        // Success
+        syncStatus.innerHTML = `
+            <strong>Data saved with code:</strong> ${code}<br>
+            <small>(Valid for 60 minutes)</small>
+        `;
+        syncStatus.className = 'success';
+        
+        // Copy to clipboard
+        await navigator.clipboard.writeText(code);
+        
+    } catch (error) {
+        console.error('Set code failed:', error);
+        syncStatus.textContent = error.message || 'Failed to set code';
+        syncStatus.className = 'error';
+    } finally {
+        const setCodeBtn = document.getElementById('set-code-btn');
+        setCodeBtn.disabled = false;
+        setCodeBtn.textContent = 'Set Code & Save Data';
     }
 }
 
