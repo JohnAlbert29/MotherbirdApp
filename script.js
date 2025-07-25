@@ -513,7 +513,6 @@ function exportData() {
     doc.save(`MotherBird_Sales_Report_${new Date().toISOString().split('T')[0]}.pdf`);
 }
 
-// Simple date format: Jul 25
 function formatSimpleDate(dateString) {
     const date = new Date(dateString);
     const month = date.toLocaleString('default', { month: 'short' });
