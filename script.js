@@ -478,8 +478,8 @@ function exportData() {
         margin: { horizontal: 10 }, // Reduced margins for more width
         tableWidth: 'wrap', // Use maximum available width
         styles: {
-            fontSize: 10,
-            cellPadding: 7, // Slightly more padding
+            fontSize: 9,
+            cellPadding: 8, // Slightly more padding
             overflow: 'linebreak',
             halign: 'center', // Center all text by default
             valign: 'middle'
