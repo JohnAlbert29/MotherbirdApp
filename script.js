@@ -395,7 +395,7 @@ function exportData() {
 
     const { jsPDF } = window.jspdf;
     const doc = new jsPDF({
-        orientation: incomeData.length > 15 ? 'landscape' : 'portrait',
+        orientation: 'landscape', // Always use landscape for wider tables
         unit: 'mm'
     });
 
@@ -404,8 +404,8 @@ function exportData() {
 
     // Title
     doc.setFontSize(18);
-    doc.setTextColor(42, 63, 84); // Correct color format (R,G,B)
-    doc.text('Mother Bird Tracking Report', 105, 20, { align: 'center' });
+    doc.setTextColor(42, 63, 84);
+    doc.text('Mother Bird Tracking Report', 148.5, 20, { align: 'center' }); // Center in landscape
 
     // Generation date
     doc.setFontSize(11);
@@ -415,34 +415,35 @@ function exportData() {
         year: 'numeric', 
         month: 'long', 
         day: 'numeric' 
-    })}`, 105, 27, { align: 'center' });
+    })}`, 148.5, 27, { align: 'center' });
 
-    // Summary section
+    // Summary section (left aligned)
     doc.setFontSize(14);
     doc.setTextColor(42, 63, 84);
-    doc.text('Summary Statistics', 105, 37, { align: 'center' });
+    doc.text('Summary Statistics', 20, 40);
 
     doc.setFontSize(11);
     doc.setTextColor(40, 40, 40);
-    doc.text(`Current Month Total: ₱${document.getElementById('monthly-total').textContent}`, 105, 44, { align: 'center' });
-    doc.text(`Last Month Total: ₱${document.getElementById('last-month-total').textContent}`, 105, 51, { align: 'center' });
+    doc.text(`Current Month Total: ₱${document.getElementById('monthly-total').textContent}`, 20, 48);
+    doc.text(`Last Month Total: ₱${document.getElementById('last-month-total').textContent}`, 20, 56);
     
-    // Growth percentage with color coding - FIXED COLOR FORMAT
+    // Growth percentage with color coding
     const growthText = `Growth Percentage: ${document.getElementById('growth-percentage').textContent}`;
     const growthValue = parseFloat(document.getElementById('growth-percentage').textContent);
     if (growthValue >= 0) {
-        doc.setTextColor(39, 174, 96); // Green for positive
+        doc.setTextColor(39, 174, 96); // Green
     } else {
-        doc.setTextColor(231, 76, 60); // Red for negative
+        doc.setTextColor(231, 76, 60); // Red
     }
-    doc.text(growthText, 105, 58, { align: 'center' });
+    doc.text(growthText, 20, 64);
+    doc.setTextColor(40, 40, 40); // Reset color
 
-    // Transaction table
+    // Transaction table (centered and wider)
     doc.setFontSize(14);
     doc.setTextColor(42, 63, 84);
-    doc.text('Transaction History', 105, 68, { align: 'center' });
+    doc.text('Transaction History', 148.5, 40, { align: 'center' });
 
-    // Prepare table data with proper number formatting
+    // Prepare table data
     const tableData = incomeData.map(entry => [
         formatPdfDate(entry.date),
         entry.day.substring(0, 3),
@@ -451,14 +452,14 @@ function exportData() {
         numberWithCommas(entry.total.toFixed(2))
     ]);
 
-    // Table configuration
+    // Table configuration for wide centered table
     const tableConfig = {
-        startY: 75,
+        startY: 45,
         head: [['Date', 'Day', 'Cash (₱)', 'Coins (₱)', 'Total (₱)']],
         body: tableData,
         headStyles: {
-            fillColor: [42, 63, 84], // Dark blue header
-            textColor: 255, // White text
+            fillColor: [42, 63, 84],
+            textColor: 255,
             fontStyle: 'bold',
             halign: 'center'
         },
@@ -467,23 +468,23 @@ function exportData() {
             valign: 'middle'
         },
         alternateRowStyles: {
-            fillColor: [245, 247, 250] // Light gray alternate rows
+            fillColor: [245, 247, 250]
         },
         styles: {
             fontSize: 10,
-            cellPadding: 3,
+            cellPadding: 4,
             overflow: 'linebreak'
         },
         columnStyles: {
-            0: { cellWidth: 25 }, // Date column
-            1: { cellWidth: 15 }, // Day column
-            2: { cellWidth: 25 }, // Cash column
-            3: { cellWidth: 25 }, // Coins column
-            4: { cellWidth: 25 }  // Total column
+            0: { cellWidth: 30 }, // Wider date column
+            1: { cellWidth: 15 },
+            2: { cellWidth: 35 }, // Wider cash column
+            3: { cellWidth: 35 }, // Wider coins column
+            4: { cellWidth: 35 }  // Wider total column
         },
-        margin: { left: 15, right: 15 },
-        tableWidth: 'auto',
-        theme: 'grid' // Adds clean grid lines
+        margin: { left: 60 }, // Push table right to center it
+        tableWidth: 180, // Fixed width for the table
+        theme: 'grid'
     };
 
     // Generate table
@@ -494,9 +495,9 @@ function exportData() {
     for(let i = 1; i <= pageCount; i++) {
         doc.setPage(i);
         doc.setFontSize(9);
-        doc.setTextColor(150, 150, 150); // Gray footer text
+        doc.setTextColor(150, 150, 150);
         doc.text(`Created by John Albert Retiza • Page ${i} of ${pageCount}`, 
-                doc.internal.pageSize.width / 2, 
+                148.5, 
                 doc.internal.pageSize.height - 10, 
                 { align: 'center' });
     }
@@ -505,12 +506,11 @@ function exportData() {
     doc.save(`MotherBird_Report_${new Date().toISOString().split('T')[0]}.pdf`);
 }
 
-// Helper function to format numbers with commas
+// Helper functions remain the same
 function numberWithCommas(x) {
     return x.toString().replace(/\B(?=(\d{3})+(?!\d))/g, ",");
 }
 
-// Special date formatting for PDF (more compact)
 function formatPdfDate(dateString) {
     const date = new Date(dateString);
     const month = date.toLocaleString('default', { month: 'short' });
