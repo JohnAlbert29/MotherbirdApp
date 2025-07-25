@@ -395,60 +395,75 @@ function exportData() {
 
     const { jsPDF } = window.jspdf;
     const doc = new jsPDF({
-        orientation: 'landscape',
+        orientation: 'portrait',
         unit: 'mm'
     });
 
     // Set default font
     doc.setFont('helvetica', 'normal');
 
-    // Title
-    doc.setFontSize(18);
+    // Add logo or app title
+    doc.setFontSize(20);
     doc.setTextColor(42, 63, 84);
-    doc.text('Mother Bird Tracking Report', 148.5, 15, { align: 'center' });
+    doc.text('MOTHER BIRD TRACKING SYSTEM', 105, 20, { align: 'center' });
 
-    // Generation date
-    doc.setFontSize(11);
+    // Add report title
+    doc.setFontSize(16);
+    doc.text('DAILY SALES REPORT', 105, 30, { align: 'center' });
+
+    // Add report date
+    doc.setFontSize(12);
     doc.setTextColor(100, 100, 100);
-    doc.text(`Generated on: ${new Date().toLocaleDateString('en-US', { 
+    doc.text(`Report Date: ${new Date().toLocaleDateString('en-US', { 
         weekday: 'long', 
         year: 'numeric', 
         month: 'long', 
         day: 'numeric' 
-    })}`, 148.5, 22, { align: 'center' });
+    })}`, 105, 38, { align: 'center' });
 
-    // Summary section
-    doc.setFontSize(14);
-    doc.setTextColor(42, 63, 84);
-    doc.text('Summary Statistics', 20, 35);
-
+    // Add summary section
     doc.setFontSize(12);
     doc.setTextColor(40, 40, 40);
-    doc.text(`Current Month: ₱${document.getElementById('monthly-total').textContent}`, 20, 45);
-    doc.text(`Last Month: ₱${document.getElementById('last-month-total').textContent}`, 20, 55);
+    doc.text('SUMMARY', 20, 50);
     
-    // Growth percentage
-    const growthText = `Growth: ${document.getElementById('growth-percentage').textContent}`;
+    // Add horizontal line
+    doc.setDrawColor(200, 200, 200);
+    doc.line(20, 52, 190, 52);
+
+    // Summary details
+    doc.text(`Current Month Total: ₱${document.getElementById('monthly-total').textContent}`, 20, 60);
+    doc.text(`Last Month Total: ₱${document.getElementById('last-month-total').textContent}`, 20, 68);
+    
+    // Growth percentage with color
+    const growthText = `Growth Percentage: ${document.getElementById('growth-percentage').textContent}`;
     const growthValue = parseFloat(document.getElementById('growth-percentage').textContent);
     if (growthValue >= 0) {
         doc.setTextColor(39, 174, 96); // Green
     } else {
         doc.setTextColor(231, 76, 60); // Red
     }
-    doc.text(growthText, 20, 65);
+    doc.text(growthText, 20, 76);
     doc.setTextColor(40, 40, 40); // Reset color
 
-    // Transaction table
-    const tableConfig = {
-        startY: 35,
-        head: [['Date', 'Day', 'Cash (₱)', 'Coins (₱)', 'Total (₱)']],
-        body: incomeData.map(entry => [
-            formatPdfDate(entry.date),
-            entry.day.substring(0, 3),
-            numberWithCommas(entry.paperMoney.toFixed(2)),
-            numberWithCommas(entry.coins.toFixed(2)),
-            numberWithCommas(entry.total.toFixed(2))
-        ]),
+    // Add transaction section
+    doc.setFontSize(12);
+    doc.text('TRANSACTION DETAILS', 20, 90);
+    doc.line(20, 92, 190, 92);
+
+    // Prepare table data
+    const tableData = incomeData.map(entry => [
+        formatPdfDate(entry.date),
+        entry.day.substring(0, 3),
+        `₱${numberWithCommas(entry.paperMoney.toFixed(2))}`,
+        `₱${numberWithCommas(entry.coins.toFixed(2))}`,
+        `₱${numberWithCommas(entry.total.toFixed(2))}`
+    ]);
+
+    // Create table
+    doc.autoTable({
+        startY: 95,
+        head: [['Date', 'Day', 'Cash', 'Coins', 'Total']],
+        body: tableData,
         headStyles: {
             fillColor: [42, 63, 84],
             textColor: 255,
@@ -470,25 +485,25 @@ function exportData() {
         columnStyles: {
             0: { cellWidth: 30 },
             1: { cellWidth: 15 },
-            2: { cellWidth: 30 },
-            3: { cellWidth: 30 },
-            4: { cellWidth: 30 }
+            2: { cellWidth: 25 },
+            3: { cellWidth: 25 },
+            4: { cellWidth: 25 }
         },
-        margin: { left: 60 },
-        tableWidth: 170,
-        theme: 'grid',
-        didDrawPage: function(data) {
-            // Footer on each page
-            doc.setFontSize(9);
-            doc.setTextColor(150, 150, 150);
-            doc.text(`Created by John Albert Retiza • Page ${data.pageNumber} of ${data.pageCount}`, 
-                    148.5, 
-                    doc.internal.pageSize.height - 10, 
-                    { align: 'center' });
-        }
-    };
+        margin: { left: 20, right: 20 },
+        theme: 'grid'
+    });
 
-    doc.autoTable(tableConfig);
+    // Add footer
+    const pageCount = doc.internal.getNumberOfPages();
+    for (let i = 1; i <= pageCount; i++) {
+        doc.setPage(i);
+        doc.setFontSize(9);
+        doc.setTextColor(150, 150, 150);
+        doc.text('Created by John Albert Retiza', 105, doc.internal.pageSize.height - 10, { align: 'center' });
+        doc.text(`Page ${i} of ${pageCount}`, 105, doc.internal.pageSize.height - 5, { align: 'center' });
+    }
+
+    // Save PDF
     doc.save(`MotherBird_Report_${new Date().toISOString().split('T')[0]}.pdf`);
 }
 
